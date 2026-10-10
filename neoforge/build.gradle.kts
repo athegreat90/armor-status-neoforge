@@ -4,6 +4,7 @@ import java.util.jar.JarFile
 plugins {
     kotlin("jvm")
     id("net.neoforged.moddev")
+    id("com.modrinth.minotaur")
 }
 
 evaluationDependsOn(":common")
@@ -197,3 +198,57 @@ val verifyModMetadata =
         }
     }
 tasks.check { dependsOn(verifyModMetadata) }
+
+// Modrinth: one version per Minecraft target (`<mod_version>+mc<mcVersion>`). Minotaur's debug mode is the default; a real
+// upload needs BOTH the MODRINTH_TOKEN environment variable and -PmodrinthDryRun=false. In a dry run a placeholder token
+// is used, so a real token is never sent anywhere. Minotaur is not configuration-cache compatible (it opts out itself).
+// Optional -PmodrinthFile=<path from the repo root> uploads an already built jar instead of the jar task's output.
+val modrinthToken = providers.environmentVariable("MODRINTH_TOKEN").orNull?.takeIf { it.isNotBlank() }
+val modrinthDryRun = modrinthToken == null || providers.gradleProperty("modrinthDryRun").orNull != "false"
+val modrinthProjectId = providers.environmentVariable("MODRINTH_PROJECT_ID").orNull?.takeIf { it.isNotBlank() }
+val modrinthVersionType =
+    mc.getProperty("modrinth_version_type")?.takeIf { it in setOf("release", "beta", "alpha") }
+        ?: throw GradleException(
+            "gradle/mc/$mcVersion.properties: modrinth_version_type must be release, beta or alpha",
+        )
+
+// The "## [<mod_version>]" section of CHANGELOG.md, without its heading.
+val changelogSection =
+    rootProject
+        .file("CHANGELOG.md")
+        .readLines()
+        .dropWhile { !it.startsWith("## [$modVersion]") }
+        .drop(1)
+        .takeWhile { !it.startsWith("## ") }
+        .joinToString("\n")
+        .trim()
+
+modrinth {
+    token = if (modrinthDryRun) "mrp_dry_run_placeholder" else modrinthToken
+    // Dry run: any slug works because debug mode never writes; Minotaur still resolves it with a read-only GET.
+    projectId = modrinthProjectId ?: "armor-status-neoforge"
+    debugMode = modrinthDryRun
+    versionNumber = "$modVersion+mc$mcVersion"
+    versionName = "$modName $modVersion for Minecraft $mcVersion"
+    versionType = modrinthVersionType
+    uploadFile = providers.gradleProperty("modrinthFile").orNull?.let { rootProject.file(it) } ?: tasks.jar
+    // ModDevGradle is not auto-detected for game versions, so both lists are explicit.
+    gameVersions = listOf(mcVersion)
+    loaders = listOf("neoforge")
+    // Modrinth "client_only": works on the client alone and stays compatible with vanilla servers.
+    environment = "client_only"
+    changelog = changelogSection.ifEmpty { "See CHANGELOG.md for $modVersion." }
+    required.project("kotlin-lang-forge")
+}
+
+tasks.named("modrinth") {
+    doFirst {
+        // Minotaur's debug dump omits the file, so state the mode and the file here.
+        val mode = if (modrinthDryRun) "DRY RUN (debug mode, nothing is uploaded)" else "REAL UPLOAD"
+        logger.lifecycle("Modrinth $mode: file=${modrinth.file.get().asFile.name}")
+        if (!modrinthDryRun) {
+            checkNotNull(modrinthProjectId) { "MODRINTH_PROJECT_ID is required for a real upload" }
+            check(changelogSection.isNotEmpty()) { "CHANGELOG.md has no '## [$modVersion]' section" }
+        }
+    }
+}

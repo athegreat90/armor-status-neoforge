@@ -1,0 +1,407 @@
+name: Release
+
+# Nothing here runs until this file is on the default branch AND either a strict `vMAJOR.MINOR.PATCH` tag is
+# pushed (real release) or the workflow is started by hand (always a dry run: no GitHub Release, no upload).
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: build, then run Minotaur in debug mode. Creates no GitHub Release and uploads nothing."
+        type: boolean
+        default: true
+
+# Least privilege: every job declares what it needs; the only write scope is `contents: write` in `github-release`.
+permissions: {}
+
+# Releases are never cancelled half way.
+concurrency:
+  group: release-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.check.outputs.version }}
+      tag: ${{ steps.check.outputs.tag }}
+      publish: ${{ steps.check.outputs.publish }}
+      dry_run: ${{ steps.check.outputs.dry_run }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history so the tagged commit can be compared with the default branch.
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate tag, version, changelog and duplicates
+        id: check
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_DRY_RUN: ${{ inputs.dry_run }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          fail() { echo "::error::$1"; exit 1; }
+
+          version="$(awk -F= '$1 == "mod_version" { gsub(/\r/, "", $2); print $2 }' gradle.properties)"
+          [[ "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] \
+            || fail "mod_version in gradle.properties ('$version') is not strict MAJOR.MINOR.PATCH."
+
+          if [[ "$EVENT_NAME" == "push" ]]; then
+            # Real release: the pushed tag is the only thing that can publish.
+            publish=true
+            dry_run=false
+            [[ "$REF_TYPE" == "tag" ]] || fail "A push run must be a tag push."
+            [[ "$REF_NAME" =~ ^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] \
+              || fail "Tag '$REF_NAME' is not strict vMAJOR.MINOR.PATCH."
+            [[ "$REF_NAME" == "v$version" ]] \
+              || fail "Tag '$REF_NAME' does not match mod_version '$version' (expected 'v$version')."
+            git merge-base --is-ancestor "$GITHUB_SHA" "origin/$DEFAULT_BRANCH" \
+              || fail "Tag '$REF_NAME' points to a commit that is not on '$DEFAULT_BRANCH'. Release from reviewed history only."
+
+            # A draft release is invisible to a read-only token, so this guard cannot see drafts.
+            if out="$(gh release view "$REF_NAME" --repo "$REPO" 2>&1)"; then
+              fail "A GitHub Release for '$REF_NAME' already exists."
+            elif [[ "$out" != *"release not found"* ]]; then
+              fail "Could not determine whether a GitHub Release for '$REF_NAME' exists: $out"
+            fi
+          else
+            # Manual run: always a dry run; the release path is exercised without a tag.
+            publish=false
+            dry_run=true
+            [[ "$INPUT_DRY_RUN" == "true" ]] \
+              || fail "Only a pushed tag can publish. A manual run must keep dry_run enabled."
+          fi
+
+          # The "## [<version>]" section of CHANGELOG.md, without its heading.
+          awk -v heading="## [$version]" '
+            /^## \[/ { if (found) exit; if (index($0, heading) == 1) { found = 1; next } }
+            found { print }
+          ' CHANGELOG.md > release-notes.md
+          if ! grep -q '[^[:space:]]' release-notes.md; then
+            if [[ "$publish" == "true" ]]; then
+              fail "CHANGELOG.md has no non-empty '## [$version]' section."
+            fi
+            echo "::warning::CHANGELOG.md has no '## [$version]' section yet; a real release would be rejected."
+          fi
+
+          {
+            echo "version=$version"
+            echo "tag=v$version"
+            echo "publish=$publish"
+            echo "dry_run=$dry_run"
+          } >> "$GITHUB_OUTPUT"
+          echo "Version $version, publish=$publish, dry_run=$dry_run" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+
+  build:
+    name: Build (Minecraft ${{ matrix.mc }})
+    needs: validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        mc: ["26.1.2", "26.2", "26.3"]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Java 25 is the project toolchain; Gradle downloads the JDK 21 launcher that ModDevGradle needs (Foojay).
+      - name: Set up Java 25
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      - name: Check formatting
+        run: ./gradlew spotlessCheck --no-daemon
+
+      - name: Unit tests (common)
+        run: ./gradlew :common:test --no-daemon
+
+      - name: Build and verify (Minecraft ${{ matrix.mc }})
+        env:
+          MC: ${{ matrix.mc }}
+        run: ./gradlew check build "-PmcVersion=$MC" --no-daemon
+
+      - name: Check jar name
+        env:
+          MC: ${{ matrix.mc }}
+          VERSION: ${{ needs.validate.outputs.version }}
+        run: test -f "neoforge/build/libs/armor-status-neoforge-${VERSION}+mc${MC}.jar"
+
+      - name: Upload jar
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: armor-status-neoforge-mc${{ matrix.mc }}
+          path: neoforge/build/libs/*.jar
+          if-no-files-found: error
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reports-mc${{ matrix.mc }}
+          path: |
+            common/build/reports
+            common/build/test-results
+            neoforge/build/reports
+          if-no-files-found: ignore
+
+  github-release:
+    name: GitHub Release
+    needs: [validate, build]
+    # Tag runs only. No `always()`: a failed build leg skips this job, so a release never ships a partial jar set.
+    if: ${{ needs.validate.outputs.publish == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download jars
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: armor-status-neoforge-mc*
+          path: release-jars
+          merge-multiple: true
+
+      - name: Download release notes
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-notes
+          path: release-notes
+
+      - name: Compose release body
+        run: |
+          set -euo pipefail
+          ls -l release-jars
+          {
+            cat release-notes/release-notes.md
+            printf '\n\n---\n\n'
+            printf 'One jar per Minecraft version. The Minecraft 26.3 jar builds against a NeoForge beta, so its '
+            printf 'Modrinth version is published on the beta channel until a stable NeoForge 26.3 exists.\n'
+          } > release-body.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          tag_name: ${{ needs.validate.outputs.tag }}
+          name: Armor Status NeoForge ${{ needs.validate.outputs.version }}
+          body_path: release-body.md
+          files: release-jars/*.jar
+          fail_on_unmatched_files: true
+          overwrite_files: false
+
+  modrinth:
+    name: Modrinth (Minecraft ${{ matrix.mc }})
+    needs: [validate, build, github-release]
+    # Runs after the GitHub Release on a tag run, and straight after the build on a dry run.
+    # `!cancelled()` keeps the job alive when `github-release` is skipped (dry run).
+    if: >-
+      ${{ !cancelled()
+      && needs.build.result == 'success'
+      && (needs.validate.outputs.publish != 'true' || needs.github-release.result == 'success') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        mc: ["26.1.2", "26.2", "26.3"]
+    env:
+      MC: ${{ matrix.mc }}
+      VERSION: ${{ needs.validate.outputs.version }}
+      DRY_RUN: ${{ needs.validate.outputs.dry_run }}
+      PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # The exact bytes that went into the GitHub Release.
+      - name: Download jar
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: armor-status-neoforge-mc${{ matrix.mc }}
+          path: release-jars
+
+      - name: Check prerequisites
+        env:
+          HAS_TOKEN: ${{ secrets.MODRINTH_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          test -f "release-jars/armor-status-neoforge-${VERSION}+mc${MC}.jar"
+          missing=0
+          if [[ "$HAS_TOKEN" != "true" ]]; then
+            if [[ "$DRY_RUN" == "true" ]]; then
+              echo "::notice::MODRINTH_TOKEN secret is not set; fine for a dry run."
+            else
+              echo "::error::MODRINTH_TOKEN secret is not set."
+              missing=1
+            fi
+          fi
+          if [[ -z "$PROJECT_ID" ]]; then
+            if [[ "$DRY_RUN" == "true" ]]; then
+              echo "::notice::MODRINTH_PROJECT_ID variable is not set; the dry run uses a placeholder project."
+            else
+              echo "::error::MODRINTH_PROJECT_ID repository variable is not set."
+              missing=1
+            fi
+          fi
+          exit "$missing"
+
+      # Read-only and unauthenticated: a public project lists its versions without a token.
+      - name: Duplicate guard
+        run: |
+          set -euo pipefail
+          if [[ -z "$PROJECT_ID" ]]; then
+            echo "::notice::No project id; duplicate guard skipped (dry run)."
+            exit 0
+          fi
+          if [[ ! "$PROJECT_ID" =~ ^[A-Za-z0-9_-]+$ ]]; then
+            echo "::error::MODRINTH_PROJECT_ID contains unexpected characters."
+            exit 1
+          fi
+          number="${VERSION}+mc${MC}"
+          status="$(curl --silent --show-error --location --max-time 30 --retry 3 --retry-all-errors \
+            --user-agent "athegreat90/armor-status-neoforge release workflow" \
+            --output versions.json --write-out '%{http_code}' \
+            "https://api.modrinth.com/v2/project/${PROJECT_ID}/version")" || status="000"
+          case "$status" in
+            200)
+              # Not inside an `if`: a jq failure (bad JSON) must stop the step instead of reading as "no duplicate".
+              exists="$(jq -r --arg n "$number" 'any(.[]; .version_number == $n)' versions.json)"
+              if [[ "$exists" == "true" ]]; then
+                echo "::error::Modrinth already has version '$number'."
+                exit 1
+              fi
+              echo "Modrinth has no version '$number'."
+              ;;
+            404)
+              # Private or not yet approved: versions cannot be listed without a token.
+              echo "::warning::Project '$PROJECT_ID' is not public yet (HTTP 404); duplicate guard could not check '$number'."
+              ;;
+            *)
+              if [[ "$DRY_RUN" == "true" ]]; then
+                echo "::warning::Duplicate guard could not query Modrinth (HTTP $status)."
+              else
+                echo "::error::Duplicate guard could not query Modrinth (HTTP $status); refusing to publish blind."
+                exit 1
+              fi
+              ;;
+          esac
+
+      - name: Set up Java 25
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # No token in this step: Minotaur debug mode prints the payload and uploads nothing.
+      - name: Minotaur dry run
+        if: ${{ needs.validate.outputs.dry_run == 'true' }}
+        run: |
+          ./gradlew modrinth "-PmcVersion=$MC" "-PmodrinthDryRun=true" \
+            "-PmodrinthFile=release-jars/armor-status-neoforge-${VERSION}+mc${MC}.jar" -x assemble --no-daemon
+
+      # The only step that sees the token. `-x assemble` uploads the downloaded jar instead of rebuilding it.
+      - name: Publish to Modrinth
+        if: ${{ needs.validate.outputs.dry_run != 'true' }}
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+        run: |
+          ./gradlew modrinth "-PmcVersion=$MC" "-PmodrinthDryRun=false" \
+            "-PmodrinthFile=release-jars/armor-status-neoforge-${VERSION}+mc${MC}.jar" -x assemble --no-daemon
+
+  summary:
+    name: Summary
+    needs: [validate, build, github-release, modrinth]
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # Read-only: lists this run's jobs to show one result per Minecraft target.
+      actions: read
+    steps:
+      - name: Report results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          PUBLISH: ${{ needs.validate.outputs.publish }}
+          VALIDATE: ${{ needs.validate.result }}
+          BUILD: ${{ needs.build.result }}
+          RELEASE: ${{ needs.github-release.result }}
+          MODRINTH: ${{ needs.modrinth.result }}
+        run: |
+          set -uo pipefail
+
+          # One "name<TAB>conclusion" line per job of the latest attempt; matrix legs carry their own names.
+          jobs="$(gh api --paginate "repos/$REPO/actions/runs/$RUN_ID/jobs" \
+            --jq '.jobs[] | "\(.name)\t\(.conclusion // "running")"')" || jobs=""
+          result() { printf '%s\n' "$jobs" | awk -F'\t' -v n="$1" '$1 == n { print $2; exit }'; }
+
+          {
+            echo "## Release summary"
+            echo
+            echo "| Step | Result |"
+            echo "|---|---|"
+            echo "| Validate | $VALIDATE |"
+            echo "| GitHub Release | $RELEASE |"
+            echo
+            echo "| Minecraft | Build | Modrinth |"
+            echo "|---|---|---|"
+            for mc in 26.1.2 26.2 26.3; do
+              echo "| $mc | $(result "Build (Minecraft $mc)") | $(result "Modrinth (Minecraft $mc)") |"
+            done
+            if [[ -z "$jobs" ]]; then
+              echo
+              echo "Per-target results could not be read from the API; see the aggregated results above."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Required: validate, every build leg, every Modrinth leg, and the GitHub Release on a real release.
+          # A skipped GitHub Release is expected on a dry run; later jobs are skipped when the build failed,
+          # and that failure is already reported, so it is not repeated for them.
+          failed=0
+          [[ "$VALIDATE" == "success" ]] || { echo "::error::Validate: $VALIDATE"; failed=1; }
+          [[ "$BUILD" == "success" ]] || { echo "::error::Build (at least one Minecraft target): $BUILD"; failed=1; }
+          if [[ "$BUILD" == "success" ]]; then
+            [[ "$MODRINTH" == "success" ]] || { echo "::error::Modrinth (at least one Minecraft target): $MODRINTH"; failed=1; }
+            if [[ "$PUBLISH" == "true" && "$RELEASE" != "success" ]]; then
+              echo "::error::GitHub Release: $RELEASE"
+              failed=1
+            fi
+          fi
+          exit "$failed"

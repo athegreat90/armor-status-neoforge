@@ -75,7 +75,8 @@ Version specifics learned: hide-GUI is `Options#hideGui` on 26.1.x and `gui.hud.
 - 2026-10-10: T1 scaffold, T2 spike (KLF loads on all three), T3 `common` domain, T4 client config, T5 HUD layer, T6 three-version runs, T7 Spotless/ktlint + metadata verification + wrapper checksum: done locally. Native reviews approved with only advisory findings.
 - T8 documentation: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, `.claude/rules/*` and this file are written.
 - T9 CI and private remote: done; CI green on PR #1.
-- Not started: T10 (release workflow, Minotaur dry-run), T11 (stop for explicit approval before going public or publishing).
+- T10 release workflow and Minotaur dry run: written and dry-run locally; the workflow itself has not run on GitHub.
+- T11: stop and wait for explicit user approval before going public, tagging or publishing.
 
 ## Test results
 
@@ -114,7 +115,9 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 - `ci.yml` exists: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3 (`fail-fast: false`); Temurin 25; `spotlessCheck`, `:common:test`, `check build "-PmcVersion=<v>"`, jar upload (test reports on failure); actions pinned by full SHA (checkout v7.0.1, setup-java v6.0.1, gradle/actions v6.4.0, upload-artifact v7.0.2); `permissions: contents: read`; concurrency cancel.
 - First run on PR #1 (run 38059858897, 2026-10-10): all three jobs green, jars uploaded (about 53 KB each, nothing shaded). This confirmed Temurin 25 resolves on `ubuntu-latest` and that the Foojay JDK 21 download works on the runner. The `gradlew` executable bit had to be set in the git index (`100755`) because it is committed from Windows.
 - Runner annotations to act on later: Gradle 9.2.1 is flagged "out of date" and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
-- Planned `release.yml`: tag `v*.*.*`; validate tag and changelog entry; build and test; duplicate guard; GitHub Release; Modrinth upload through Minotaur 2.10.0 with a dry run first; 26.1.2 and 26.2 as `release`, 26.3 as `beta`.
+- `release.yml` is written but has NEVER run (it must be on the default branch first). Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
+- Local proof (2026-10-10): `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` succeeds without a token and prints the planned payload; Minotaur debug mode makes two read-only GETs to api.modrinth.com. A real upload requires `MODRINTH_TOKEN` in the environment, `MODRINTH_PROJECT_ID` and `-PmodrinthDryRun=false`.
+- First exercise to schedule after PR #1 merges: run `release.yml` through `workflow_dispatch` (dry run). Before a real tag, add a `[0.1.0]` section to `CHANGELOG.md`.
 - Needed from the user: Modrinth project, repository secret `MODRINTH_TOKEN`, repository variable `MODRINTH_PROJECT_ID`. Neither exists. Never store them here.
 
 ## Local development
