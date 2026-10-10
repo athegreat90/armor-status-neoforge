@@ -77,5 +77,10 @@ T3 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - `.\gradlew.bat build "-PmcVersion=26.1.2"`: BUILD SUCCESSFUL. `.\gradlew.bat build "-PmcVersion=26.3"`: BUILD SUCCESSFUL.
 - Not verified: `build "-PmcVersion=26.2"` (not requested for T3); no runtime check (pure unit tests only).
 
+- T3 closed: commit `43a3ef9` (`feat(common): add pure armor status domain with tests`). Parent spot check: `:common:test --rerun-tasks` exit 0, 223 tests / 0 failures (read from XML); no `!!` in main sources; `Recovery.kt` read back. Writer reported RED as compile-only for display/layout/config/visibility/error groups (assertion-level RED only for model).
+- Review T2+T3 (slice base `59cbe40`, 26 files, 1075 lines): assessed medium (`slice_budget_reached`), consent granted, 1-lens (reliability) review approved, acknowledged and burned (lineage `review-2d8f48f5814b61ea`). Reviewed boundary advances to `43a3ef9`. Only advisory finding (doc checkbox wording) already resolved by this entry.
+- Branching: T1–T3 landed on local `main` before the feature branch rule was applied; from T4 on, work happens on `feat/armor-status-hud`. Nothing is pushed yet.
+- Running authored-lines count (additions+deletions, generated excluded): ~1.8k over T1–T3 (650 + 97 + 1075 approx.). Delivery strategy still `ask-on-risk` (chain choice pending).
+
 ## Next step
-T3: `common` domain (models, durability calc, layout, settings + validation) test-first.
+T4: `ModConfigSpec` client config + `ConfigurationScreen` factory, wired to `HudSettings.sanitized` via `loadOrDefault`.
