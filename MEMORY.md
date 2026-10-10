@@ -74,7 +74,7 @@ Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEn
 
 - 2026-10-10: T1 scaffold, T2 spike (KLF loads on all three), T3 `common` domain, T4 client config, T5 HUD layer, T6 three-version runs, T7 Spotless/ktlint + metadata verification + wrapper checksum: done locally. Native reviews approved with only advisory findings.
 - T8 documentation: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, `.claude/rules/*` and this file are written.
-- 2026-10-10 F3 follow-up: new setting `hideWhenDebugScreen` (default `true`) hides the HUD while the F3 debug screen is shown, because the default left anchor covered the debug text. Pure rule in `common` (`shouldRender(..., debugScreenOpen)`), detection in `neoforge/.../hud/DebugScreen.kt`. Compiled on the three targets; on-screen behaviour awaits the user's manual check.
+- 2026-10-10 F3 follow-up: the default left anchor covered the F3 debug text. First attempt (`hideWhenDebugScreen`, hide the HUD) was replaced after the user's in-game test by `debugScreenMode` (`COMPACT` default, `HIDE`, `KEEP`) and `debugScreenScale` (`0.6`, range `0.25` to `1.0`). While F3 is open in `COMPACT` the HUD is drawn at `scale * debugScreenScale` (icons, text and row gaps shrink, anchor unchanged). Pure rules in `common` (`shouldRender(..., debugScreenOpen)` hides only in `HIDE`; `HudSettings.effectiveScale(debugScreenOpen)`), detection in `neoforge/.../hud/DebugScreen.kt`. Compiled on the three targets; on-screen behaviour awaits the user's manual check.
 - T9 CI and private remote: done; CI green on PR #1.
 - T10 release workflow and Minotaur dry run: written and dry-run locally; the workflow itself has not run on GitHub.
 - T11: stop and wait for explicit user approval before going public, tagging or publishing.
@@ -85,7 +85,7 @@ All on native Windows 11, JDK 25.0.2, 2026-10-10.
 
 | Check | Command | Outcome |
 |---|---|---|
-| Unit tests | `.\gradlew.bat :common:test --rerun-tasks` | 258 tests, 0 skipped, 0 failures (XML sum, 2026-10-10 after the F3 follow-up) |
+| Unit tests | `.\gradlew.bat :common:test --rerun-tasks` | 289 tests, 0 skipped, 0 failures (XML sum, 2026-10-10 after the F3 compact follow-up) |
 | Format + metadata + build | `.\gradlew.bat check "-PmcVersion=<v>"` and `build` for 26.1.2, 26.2, 26.3 | BUILD SUCCESSFUL each, no Kotlin warnings |
 | Dev client | `runClient` on 26.1.2, 26.2, 26.3 with a test datapack and a save loaded through `quickPlay` | Render path reached, 0 `ERROR`/`Exception` lines, live config edit reloaded |
 | Wrapper checksum | Fresh `GRADLE_USER_HOME` with the real and a wrong `distributionSha256Sum` | Right sum accepted, wrong sum rejected |
@@ -93,7 +93,7 @@ All on native Windows 11, JDK 25.0.2, 2026-10-10.
 | `buildAll` failure path | Simulated compile error in an overlay | `buildAll` exits 1 and does not report success |
 | Dedicated server | `runServer` on 26.1.2 | Reached `Done`; mod not instantiated |
 
-F3 follow-up smoke (2026-10-10): `runClient "-PmcVersion=26.2" "-PquickPlay=TestWorld262"` reached the world, `neoforge/run/config/armorstatusneoforge-client.toml` gained `hideWhenDebugScreen = true`, the settings log line shows `hideWhenDebugScreen=true`, a live edit to `false` and back reloaded as logged, 0 `ERROR`/`Exception` lines. F3 itself was not pressed (UNVERIFIED on screen).
+F3 compact follow-up smoke (2026-10-10): `runClient "-PmcVersion=26.2" "-PquickPlay=TestWorld262"` reached the world. The stale `hideWhenDebugScreen` key in the local config was dropped by NeoForge (logged `Configuration file ... is not correct. Correcting`, no error) and the file gained `debugScreenMode = "COMPACT"` and `debugScreenScale = 0.6`. The settings log line shows both fields, live edits to `HIDE`, `KEEP` (restart) and back to `COMPACT`/`0.6` reloaded as logged, 0 `ERROR`/`Exception` lines. F3 itself was not pressed (compact behaviour UNVERIFIED on screen).
 
 Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 and 26.2 and `rows=3` (chest hidden, right-aligned) on 26.3; the probe was removed afterwards. Config corruption on 26.1.2 was corrected by NeoForge or recreated with defaults.
 
@@ -148,6 +148,6 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 2. T10: release workflow and a Minotaur dry run; licence and attribution review.
 3. T11: stop and ask for explicit approval before making the repository public or publishing.
 4. Create an original mod icon (none exists).
-5. Manual visual checklist on each version: four armor pieces, partial and near-broken damage, empty slots, spectator, F1, F3 (HUD hidden by default, visible again with `hideWhenDebugScreen = false`), GUI scales 1 to 4, all six anchors, config screen, world join and leave.
+5. Manual visual checklist on each version: four armor pieces, partial and near-broken damage, empty slots, spectator, F1, F3 (HUD compact and closer together by default; `debugScreenMode = "HIDE"` hides it, `"KEEP"` leaves it unchanged, `debugScreenScale` changes the compact size), GUI scales 1 to 4, all six anchors, config screen, world join and leave.
 6. Join a vanilla server with the mod installed.
 7. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).

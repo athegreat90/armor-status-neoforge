@@ -11,5 +11,6 @@
   "armorstatusneoforge.configuration.showBoots": "Show Boots",
   "armorstatusneoforge.configuration.displayMode": "Durability Display",
   "armorstatusneoforge.configuration.gradientColors": "Gradient Colors",
-  "armorstatusneoforge.configuration.hideWhenDebugScreen": "Hide in Debug Screen (F3)"
+  "armorstatusneoforge.configuration.debugScreenMode": "Debug Screen (F3) Behaviour",
+  "armorstatusneoforge.configuration.debugScreenScale": "Compact Scale in Debug Screen (F3)"
 }

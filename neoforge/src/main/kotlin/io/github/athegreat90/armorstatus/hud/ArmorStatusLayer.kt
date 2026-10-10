@@ -2,6 +2,7 @@ package io.github.athegreat90.armorstatus.hud
 
 import com.mojang.logging.LogUtils
 import io.github.athegreat90.armorstatus.config.ActiveHudSettings
+import io.github.athegreat90.armorstatus.config.effectiveScale
 import io.github.athegreat90.armorstatus.config.shows
 import io.github.athegreat90.armorstatus.display.DurabilityTextCache
 import io.github.athegreat90.armorstatus.error.isFatal
@@ -72,13 +73,14 @@ internal class ArmorStatusLayer : GuiLayer {
         val settings = ActiveHudSettings.current
         val minecraft = Minecraft.getInstance()
         val player: Player? = minecraft.player
+        val debugOpen = minecraft.isDebugScreenOpen()
         val visible =
             shouldRender(
                 settings = settings,
                 hasPlayer = player != null,
                 isSpectator = player != null && player.isSpectator,
                 hudHidden = minecraft.isHudHidden(),
-                debugScreenOpen = minecraft.isDebugScreenOpen(),
+                debugScreenOpen = debugOpen,
             )
         if (player == null || !visible) return
 
@@ -102,17 +104,19 @@ internal class ArmorStatusLayer : GuiLayer {
         }
         if (rows == 0) return
 
+        // Smaller while F3 is open in COMPACT mode; the cache key and the pose scale must use the same value.
+        val scale = settings.effectiveScale(debugOpen)
         val canvas = HudCanvas(graphics)
         val layout =
             layoutCache.layout(
                 canvas.guiWidth,
                 canvas.guiHeight,
-                settings.scale,
+                scale,
                 HudCanvas.fontHeight,
                 settings.anchor,
                 rows,
             )
-        canvas.pushScale(settings.scale)
+        canvas.pushScale(scale)
         try {
             for (row in 0 until rows) {
                 val slot = rowSlots[row]

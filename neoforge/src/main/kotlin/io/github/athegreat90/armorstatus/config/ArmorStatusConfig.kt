@@ -41,10 +41,20 @@ internal object ArmorStatusConfig {
             .entry("gradientColors", "Color the durability text from green (full) to red (almost broken).")
             .define("gradientColors", false)
 
-    private val hideWhenDebugScreen =
+    private val debugScreenMode =
         builder
-            .entry("hideWhenDebugScreen", "Hide the HUD while the F3 debug screen is shown, so it does not cover it.")
-            .define("hideWhenDebugScreen", true)
+            .entry(
+                "debugScreenMode",
+                "What the HUD does while the F3 debug screen is open: COMPACT draws it smaller, HIDE hides it, " +
+                    "KEEP leaves it unchanged.",
+            ).defineEnum("debugScreenMode", DebugScreenMode.COMPACT)
+
+    private val debugScreenScale =
+        builder
+            .entry(
+                "debugScreenScale",
+                "Extra size factor applied to the HUD while the F3 debug screen is open in COMPACT mode.",
+            ).defineInRange("debugScreenScale", 0.6, MIN_DEBUG_SCALE.toDouble(), MAX_DEBUG_SCALE.toDouble())
 
     val spec: ModConfigSpec = builder.build()
 
@@ -63,7 +73,8 @@ internal object ArmorStatusConfig {
             showFeet = showBoots.get(),
             displayModeName = displayMode.get().name,
             gradientColors = gradientColors.get(),
-            hideWhenDebugScreen = hideWhenDebugScreen.get(),
+            debugScreenModeName = debugScreenMode.get().name,
+            debugScreenScale = debugScreenScale.get(),
         )
 
     private fun ModConfigSpec.Builder.entry(

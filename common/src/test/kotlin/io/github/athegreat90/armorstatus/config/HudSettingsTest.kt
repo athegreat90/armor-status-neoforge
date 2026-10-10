@@ -18,7 +18,8 @@ class HudSettingsTest {
         anchorName: String? = "MIDDLE_LEFT",
         scale: Double = 1.0,
         displayModeName: String? = "RAW",
-        hideWhenDebugScreen: Boolean = true,
+        debugScreenModeName: String? = "COMPACT",
+        debugScreenScale: Double = 0.6,
     ) = HudSettings.sanitized(
         enabled = true,
         anchorName = anchorName,
@@ -29,7 +30,8 @@ class HudSettingsTest {
         showFeet = true,
         displayModeName = displayModeName,
         gradientColors = false,
-        hideWhenDebugScreen = hideWhenDebugScreen,
+        debugScreenModeName = debugScreenModeName,
+        debugScreenScale = debugScreenScale,
     )
 
     @Test
@@ -40,7 +42,8 @@ class HudSettingsTest {
         assertEquals(1.0f, defaults.scale)
         assertEquals(DurabilityDisplayMode.RAW, defaults.displayMode)
         assertFalse(defaults.gradientColors)
-        assertTrue(defaults.hideWhenDebugScreen)
+        assertEquals(DebugScreenMode.COMPACT, defaults.debugScreenMode)
+        assertEquals(0.6f, defaults.debugScreenScale)
         ArmorSlot.entries.forEach { assertTrue(defaults.shows(it), "$it") }
     }
 
@@ -48,6 +51,12 @@ class HudSettingsTest {
     fun `scale bounds are 0_5 to 2_0`() {
         assertEquals(0.5f, MIN_SCALE)
         assertEquals(2.0f, MAX_SCALE)
+    }
+
+    @Test
+    fun `debug scale bounds are 0_25 to 1_0`() {
+        assertEquals(0.25f, MIN_DEBUG_SCALE)
+        assertEquals(1.0f, MAX_DEBUG_SCALE)
     }
 
     @ParameterizedTest(name = "{0} is shown only when its toggle is on")
@@ -134,7 +143,8 @@ class HudSettingsTest {
                 showFeet = true,
                 displayModeName = "PERCENT",
                 gradientColors = true,
-                hideWhenDebugScreen = false,
+                debugScreenModeName = "KEEP",
+                debugScreenScale = 0.4,
             )
         assertEquals(
             HudSettings(
@@ -147,16 +157,76 @@ class HudSettingsTest {
                 showFeet = true,
                 displayMode = DurabilityDisplayMode.PERCENT,
                 gradientColors = true,
-                hideWhenDebugScreen = false,
+                debugScreenMode = DebugScreenMode.KEEP,
+                debugScreenScale = 0.4f,
             ),
             result,
         )
     }
 
+    @ParameterizedTest(name = "debug mode \"{0}\" -> {1}")
+    @CsvSource("compact, COMPACT", "HIDE, HIDE", "' Keep ', KEEP", "Hide, HIDE")
+    fun `sanitized parses debug screen mode names case-insensitively`(
+        name: String,
+        expected: DebugScreenMode,
+    ) {
+        assertEquals(expected, sanitized(debugScreenModeName = name).debugScreenMode)
+    }
+
+    @ParameterizedTest(name = "unknown debug mode \"{0}\" -> COMPACT")
+    @ValueSource(strings = ["", "  ", "true", "false", "shrink"])
+    fun `sanitized falls back to compact for unknown debug screen modes`(name: String) {
+        assertEquals(DebugScreenMode.COMPACT, sanitized(debugScreenModeName = name).debugScreenMode)
+    }
+
     @Test
-    fun `sanitized hides the hud in the debug screen unless told otherwise`() {
-        assertTrue(sanitized().hideWhenDebugScreen)
-        assertFalse(sanitized(hideWhenDebugScreen = false).hideWhenDebugScreen)
+    fun `sanitized falls back to compact for a null debug screen mode`() {
+        assertEquals(DebugScreenMode.COMPACT, sanitized(debugScreenModeName = null).debugScreenMode)
+    }
+
+    @ParameterizedTest(name = "debug scale {0} -> {1}")
+    @CsvSource("0.6, 0.6", "0.25, 0.25", "1.0, 1.0", "0.1, 0.25", "-2.0, 0.25", "3.0, 1.0", "0.5, 0.5")
+    fun `sanitized coerces the debug scale into the allowed range`(
+        scale: Double,
+        expected: Float,
+    ) {
+        assertEquals(expected, sanitized(debugScreenScale = scale).debugScreenScale)
+    }
+
+    @Test
+    fun `sanitized replaces a NaN debug scale with the default and clamps infinities`() {
+        assertEquals(0.6f, sanitized(debugScreenScale = Double.NaN).debugScreenScale)
+        assertEquals(MAX_DEBUG_SCALE, sanitized(debugScreenScale = Double.POSITIVE_INFINITY).debugScreenScale)
+        assertEquals(MIN_DEBUG_SCALE, sanitized(debugScreenScale = Double.NEGATIVE_INFINITY).debugScreenScale)
+    }
+
+    @ParameterizedTest(name = "mode {0}, f3 closed -> the plain scale")
+    @EnumSource(DebugScreenMode::class)
+    fun `the effective scale ignores the debug scale while f3 is closed`(mode: DebugScreenMode) {
+        val settings = HudSettings.Default.copy(scale = 1.5f, debugScreenMode = mode, debugScreenScale = 0.5f)
+        assertEquals(1.5f, settings.effectiveScale(debugScreenOpen = false))
+    }
+
+    @ParameterizedTest(name = "mode {0}, f3 open -> {1}")
+    @CsvSource("COMPACT, 0.75", "HIDE, 1.5", "KEEP, 1.5")
+    fun `only compact shrinks the hud while f3 is open`(
+        mode: DebugScreenMode,
+        expected: Float,
+    ) {
+        val settings = HudSettings.Default.copy(scale = 1.5f, debugScreenMode = mode, debugScreenScale = 0.5f)
+        assertEquals(expected, settings.effectiveScale(debugScreenOpen = true))
+    }
+
+    @Test
+    fun `the default settings draw at 0_6 while f3 is open and at 1_0 otherwise`() {
+        assertEquals(0.6f, HudSettings.Default.effectiveScale(debugScreenOpen = true))
+        assertEquals(1.0f, HudSettings.Default.effectiveScale(debugScreenOpen = false))
+    }
+
+    @Test
+    fun `the effective scale stays positive at the smallest scale and debug scale`() {
+        val settings = HudSettings.Default.copy(scale = MIN_SCALE, debugScreenScale = MIN_DEBUG_SCALE)
+        assertEquals(0.125f, settings.effectiveScale(debugScreenOpen = true))
     }
 
     @Test
@@ -164,5 +234,12 @@ class HudSettingsTest {
         assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(scale = 0.4f) }
         assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(scale = 2.1f) }
         assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(scale = Float.NaN) }
+    }
+
+    @Test
+    fun `the constructor rejects an out-of-range debug scale`() {
+        assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(debugScreenScale = 0.24f) }
+        assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(debugScreenScale = 1.01f) }
+        assertFailsWith<IllegalArgumentException> { HudSettings.Default.copy(debugScreenScale = Float.NaN) }
     }
 }

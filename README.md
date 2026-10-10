@@ -16,7 +16,7 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 - Scale from 0.5 to 2.0, applied on top of Minecraft's GUI scale.
 - Toggles per armor slot, plus a global enable toggle.
 - Hidden while spectating, while the HUD is hidden with F1, and when there is no player.
-- Hidden while the F3 debug screen is shown, so it does not cover the debug text. Turn this off with `hideWhenDebugScreen`.
+- While the F3 debug screen is open the HUD stays visible but compact (scaled down, so the rows sit closer together and cover less of the debug text). Choose `COMPACT`, `HIDE` or `KEEP` with `debugScreenMode`.
 - Client-only: the server does not need the mod.
 
 ## Supported Minecraft versions
@@ -51,7 +51,8 @@ Edit `config/armorstatusneoforge-client.toml`, or open **Mods > Armor Status Neo
 | `showBoots` | `true` | `true`, `false` |
 | `displayMode` | `RAW` | `RAW` (remaining durability points), `PERCENT` |
 | `gradientColors` | `false` | `true`, `false` |
-| `hideWhenDebugScreen` | `true` | `true` (hide the HUD while the F3 debug screen is shown), `false` |
+| `debugScreenMode` | `COMPACT` | `COMPACT` (smaller while F3 is open), `HIDE` (not drawn while F3 is open), `KEEP` (unchanged) |
+| `debugScreenScale` | `0.6` | `0.25` to `1.0`; extra factor applied on top of `scale` while F3 is open in `COMPACT` mode |
 
 NeoForge corrects invalid values in the file: numbers are clamped to the nearest bound, and invalid enum or boolean values are reset to their defaults.
 
