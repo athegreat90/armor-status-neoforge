@@ -7,7 +7,7 @@ Version-controlled project memory. Update at each milestone. Every result below 
 - Client-only NeoForge mod in Kotlin that shows worn armor durability (item icon + number) on the HUD. Targets Minecraft 26.1.2, 26.2 and 26.3, Java 25, language provider KotlinLangForge (KLF).
 - Unofficial, clean-room reimplementation inspired by ShirjeelPlays' Fabric mod Armor Status. Our code is MIT. See `ATTRIBUTION.md`.
 - Mod id `armorstatusneoforge`, group `io.github.athegreat90`, version `0.1.0`, author `athegreat90`.
-- Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The private repository `athegreat90/armor-status-neoforge` exists and CI is green on `main`. No release, tag or Modrinth project exists; T11 (going public and publishing) awaits explicit user approval.
+- Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The private repository `athegreat90/armor-status-neoforge` exists and CI is green on `main`. A private Modrinth project exists, but no release or tag does; T11 (going public and publishing) awaits explicit user approval.
 
 ## Architecture decisions
 
@@ -129,8 +129,8 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 - CI on `main` after the merge (run 38064670429, `3c2e81e`): all three jobs green.
 - `release.yml` is on `main` now but has NEVER run. Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
 - Local proof (2026-10-10): `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` succeeds without a token and prints the planned payload; Minotaur debug mode makes two read-only GETs to api.modrinth.com. A real upload requires `MODRINTH_TOKEN` in the environment, `MODRINTH_PROJECT_ID` and `-PmodrinthDryRun=false`.
-- First exercise to schedule (needs the user's go-ahead): run `release.yml` through `workflow_dispatch` (dry run). Before a real tag, add a `[0.1.0]` section to `CHANGELOG.md`.
-- Needed from the user: Modrinth project, repository secret `MODRINTH_TOKEN`, repository variable `MODRINTH_PROJECT_ID`. Neither exists. Never store them here.
+- Release dry run (2026-10-11, run 38091137721, `workflow_dispatch` on `main`): Validate, the three builds, the three Modrinth jobs and Summary succeeded; the GitHub Release job was skipped as designed. Two warnings: the Modrinth project returned HTTP 404 (not public yet), so the duplicate guard could not check `0.1.0+mc<mc>`, and at that time `CHANGELOG.md` had no `[0.1.0]` section (added afterwards, dated 2026-10-11; change the date if the tag is cut later). A dry run never sends the token to Modrinth, so the token's validity is untested.
+- Modrinth credentials: the project exists; repository secret `MODRINTH_TOKEN` and repository variable `MODRINTH_PROJECT_ID` are set (checked by name only, 2026-10-11). The project id is not secret; the token must never be a variable and never be stored or printed. A token was once saved as a plain variable by mistake and was revoked and replaced.
 
 ## Local development
 
@@ -153,7 +153,7 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 
 ## Next steps
 
-1. T11: stop and ask for explicit approval before each of these: making the repository public, creating the Modrinth project (secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`), adding a `[0.1.0]` section to `CHANGELOG.md`, dry-running `release.yml` with `workflow_dispatch`, and tagging.
+1. T11: done so far with approval: Modrinth project and credentials, release dry run, `[0.1.0]` changelog section. Still waiting for explicit approval: making the repository public, making the Modrinth project public, and tagging `v0.1.0`.
 2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `iconFile`/`iconBlur` on 26.2 and 26.3 and `logoFile`/`logoBlur` on 26.1.2 (see "Version specifics learned").
 3. Finish the manual visual checklist: 26.2 is done for the default layout and F3. Still open on 26.1.2 and 26.3, and on 26.2 for partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
 4. Join a vanilla server with the mod installed.
