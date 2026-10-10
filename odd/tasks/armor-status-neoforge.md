@@ -21,7 +21,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - [x] T6 Port to 26.2 and 26.3; binary-compat check. Accept: 3 builds + 3 smoke tests.
 - [x] T7 Spotless + ktlint, metadata validation task, jar naming.
 - [x] T8 Docs: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, rules, MEMORY.md.
-- [ ] T9 CI workflow; push to PRIVATE remote; confirm Actions green.
+- [x] T9 CI workflow; push to PRIVATE remote; confirm Actions green.
 - [ ] T10 Release workflow + Minotaur dry-run; licence/attribution review.
 - [ ] T11 STOP: ask explicit approval before going public or publishing.
 
@@ -138,5 +138,10 @@ T6 remainder + T7 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - T6+T7 parent spot check: `check "-PmcVersion=26.1.2"` exit 0 (spotlessCheck + verifyModMetadata); wrapper `distributionSha256Sum` present. Formatting churn (23 Kotlin files, ~+305/-84) is committed separately from the build-gate commit.
 - T7 findings: ktlint 1.8.0 (embedded Kotlin 2.2.21) parsed all sources incl. Kotlin 2.4.21 code; `buildAll` fails correctly when a target fails; wrapper checksum proven with a fresh `GRADLE_USER_HOME` (right sum OK, wrong sum rejected).
 
+- Review T8 (slice base `7a74208`, 10 files, 619 lines): medium, consent granted, 1-lens review approved (advisory only: hard-coded test count repeated in 3 docs; CLAUDE.md should say `LinkageError` bypasses the one-shot flag), acknowledged and burned (lineage `review-9e2ce8222264d701`). Reviewed boundary advances to `dfed96f`. Disclosure: in the consent question I appended an interpretive clause to the risk evidence that was not in the envelope.
+- T9 done (2026-10-10): `ci.yml` committed `cc2218a`; `gradlew` set to mode 100755 in the index; private repo `athegreat90/armor-status-neoforge` created (visibility verified PRIVATE); pushed `main` (43a3ef9) and `feat/armor-status-hud` (no force); user chose one PR with size exception; PR #1 opened; CI run 38059858897 green on 26.1.2, 26.2, 26.3 with jar artifacts. Resolved unknowns: Temurin 25 available via setup-java v6, Foojay JDK 21 works on the runner.
+- Delivery slices (stacked-to-main amended by the user's choice): `main` = T1-T3 (reviewed, pushed as initial history); PR #1 = T4..T9 in one PR (size exception, ~2.3k lines).
+- Follow-ups (advisory): CLAUDE.md note on `LinkageError` vs the one-shot flag; avoid hard-coding the test count in three docs.
+
 ## Next step
-T8: docs (README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, `.claude/rules`, MEMORY.md), then T9 (CI + private remote).
+T10: `release.yml` (tag-triggered, duplicate guard, GitHub Release, Minotaur dry-run); then T11 stop for explicit approval. PR #1 awaits the user's review and merge.

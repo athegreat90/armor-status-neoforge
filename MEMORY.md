@@ -74,7 +74,8 @@ Version specifics learned: hide-GUI is `Options#hideGui` on 26.1.x and `gui.hud.
 
 - 2026-10-10: T1 scaffold, T2 spike (KLF loads on all three), T3 `common` domain, T4 client config, T5 HUD layer, T6 three-version runs, T7 Spotless/ktlint + metadata verification + wrapper checksum: done locally. Native reviews approved with only advisory findings.
 - T8 documentation: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, `.claude/rules/*` and this file are written.
-- Not started: T9 (CI, private remote), T10 (release workflow, Minotaur dry-run), T11 (stop for explicit approval before going public or publishing).
+- T9 CI and private remote: done; CI green on PR #1.
+- Not started: T10 (release workflow, Minotaur dry-run), T11 (stop for explicit approval before going public or publishing).
 
 ## Test results
 
@@ -109,8 +110,10 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 
 ## CI/CD
 
-- Not implemented. No workflows exist and nothing has been pushed.
-- Planned `ci.yml`: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3; Java 25 (Temurin availability to confirm on the first run); Spotless, `:common:test`, `build`, `verifyModMetadata`, upload jars; actions pinned by full SHA; read-only permissions; network needed for the JDK 21 toolchain download.
+- Private repository `athegreat90/armor-status-neoforge` exists (visibility verified `PRIVATE` on 2026-10-10). `main` holds the reviewed T1 to T3 history; everything else is on `feat/armor-status-hud` and PR #1.
+- `ci.yml` exists: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3 (`fail-fast: false`); Temurin 25; `spotlessCheck`, `:common:test`, `check build "-PmcVersion=<v>"`, jar upload (test reports on failure); actions pinned by full SHA (checkout v7.0.1, setup-java v6.0.1, gradle/actions v6.4.0, upload-artifact v7.0.2); `permissions: contents: read`; concurrency cancel.
+- First run on PR #1 (run 38059858897, 2026-10-10): all three jobs green, jars uploaded (about 53 KB each, nothing shaded). This confirmed Temurin 25 resolves on `ubuntu-latest` and that the Foojay JDK 21 download works on the runner. The `gradlew` executable bit had to be set in the git index (`100755`) because it is committed from Windows.
+- Runner annotations to act on later: Gradle 9.2.1 is flagged "out of date" and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
 - Planned `release.yml`: tag `v*.*.*`; validate tag and changelog entry; build and test; duplicate guard; GitHub Release; Modrinth upload through Minotaur 2.10.0 with a dry run first; 26.1.2 and 26.2 as `release`, 26.3 as `beta`.
 - Needed from the user: Modrinth project, repository secret `MODRINTH_TOKEN`, repository variable `MODRINTH_PROJECT_ID`. Neither exists. Never store them here.
 
@@ -135,7 +138,7 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 
 ## Next steps
 
-1. T9: CI workflow; create a PRIVATE remote `athegreat90/armor-status-neoforge`; push per the `stacked-to-main` strategy; confirm Actions are green.
+1. Review and merge PR #1 (user decision). It is one PR with a documented size exception, chosen over stacked slices because `ci.yml` and the gates only land in the last slices.
 2. T10: release workflow and a Minotaur dry run; licence and attribution review.
 3. T11: stop and ask for explicit approval before making the repository public or publishing.
 4. Create an original mod icon (none exists).
