@@ -16,7 +16,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - [x] T1 Scaffold (commit 59cbe40): dir, git init (done), .gitignore, .editorconfig, wrapper 9.2.1, settings/build scripts, version props, empty `common` + `neoforge`. Accept: `gradlew.bat build` passes for 26.1.2.
 - [x] T2 Spike: minimal `@Mod` object + mods.toml + KLF dep; `runClient` on 26.1.2, 26.2, 26.3. Resolves plan §17 unknowns.
 - [x] T3 `common` domain: models, durability calc, layout, settings + validation (RED→GREEN). Accept: `:common:test` green.
-- [ ] T4 Config: `ModConfigSpec` binding + `ConfigurationScreen` factory + Result-based fallback.
+- [x] T4 Config: `ModConfigSpec` binding + `ConfigurationScreen` factory + Result-based fallback.
 - [ ] T5 HUD renderer + `HudCanvas` adapter + layer registration. Accept: manual checklist on 26.1.2.
 - [ ] T6 Port to 26.2 and 26.3; binary-compat check. Accept: 3 builds + 3 smoke tests.
 - [ ] T7 Spotless + ktlint, metadata validation task, jar naming.
@@ -36,6 +36,8 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - T2 environment finding: MDG `downloadAssets` needs a Java 21 toolchain; only JDK 25 is installed, so runs used `-Porg.gradle.java.installations.paths=<VS Code redhat.java JRE 21>`. Machine-specific; CI (T9) needs JDK 21 beside 25 or a toolchain resolver.
 - T3 writer (2026-10-10): `:common` domain implemented test-first in packages `model` (ArmorSlot, DurabilityReading + `readDurability`), `display` (DurabilityDisplayMode, `label`, `durabilityColor`, `WHITE`), `layout` (HudAnchor + VerticalAlign, HudLayout.compute/rowY), `config` (HudSettings, `sanitized`, `shows`, MIN/MAX_SCALE), `visibility` (`shouldRender`), `error` (`isFatal`, `rethrowFatal`, `loadOrDefault`). Removed placeholder `Durability.kt`/`DurabilityTest.kt` and the `:common` probe from `ArmorStatusNeoForge.kt`; added `testImplementation(junit-jupiter-params)` (version from the JUnit BOM). T3 checkbox intentionally left unchecked (parent closes it).
 - T3 decisions: PERCENT = round half up, but 0% only when remaining == 0 and 100% only when undamaged (clamped to 1..99 otherwise). Gradient stops (fraction -> RGB): 1.0 55FF55, 0.8 AAFF55, 0.6 FFFF55, 0.4 FF5555, 0.2 AA0000, 0.0 AA00AA; NaN treated as full durability. `HudSettings.scale` is `Float` and validated in `init` (illegal states unrepresentable); `sanitized` takes `Double` and coerces. `HudLayout.textX` is the left edge for left anchors and the right edge for right anchors (`textRightAligned`).
+- T4 writer (2026-10-10): added `neoforge/.../config/{ArmorStatusConfig,ActiveHudSettings,ConfigRefresh}.kt`, `assets/armorstatusneoforge/lang/en_us.json`, and the Foojay toolchain resolver `1.0.0` in `settings.gradle.kts`. `ArmorStatusNeoForge` changed from `object` to `class(modBus: IEventBus, container: ModContainer)` (constructor injection is impossible on an `object`). No new pure logic in `common` (existing `HudSettings.sanitized` + `loadOrDefault` reused), so no new unit tests. T4 checkbox left unchecked for the parent.
+- T4 decisions: enum config values are shown by their literal name in the screen (`common` has no Minecraft dependency, so it cannot implement `TranslatableEnum`); NeoForge corrects invalid values in the file before our code reads them, so the `loadOrDefault` failure path stays as defense in depth only; one INFO line per refresh logs the resulting settings.
 
 ## Route declaration
 | Task | Route | Trigger evidence |
@@ -43,6 +45,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 | T1 | delegated direct (one writer) | 2+ non-trivial files |
 | T2 | delegated direct (one writer) | needs runClient x3 + reading KLF sources (>5 lookups) |
 | T3 | delegated direct (one writer) | 19 non-trivial files |
+| T4 | delegated direct (one writer) | NeoForge API lookups + 3 runClient runs (>5 lookups) |
 
 ## Verification evidence
 T1 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
@@ -82,5 +85,17 @@ T3 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - Branching: T1–T3 landed on local `main` before the feature branch rule was applied; from T4 on, work happens on `feat/armor-status-hud`. Nothing is pushed yet.
 - Running authored-lines count (additions+deletions, generated excluded): ~1.8k over T1–T3 (650 + 97 + 1075 approx.). Delivery strategy still `ask-on-risk` (chain choice pending).
 
+T4 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
+- `.\gradlew.bat :common:test --rerun-tasks`: BUILD SUCCESSFUL; XML sum 223 tests, 0 skipped, 0 failures, 0 errors.
+- `.\gradlew.bat build "-PmcVersion={26.1.2,26.2,26.3}"`: BUILD SUCCESSFUL each; no Kotlin warnings; 26.3 jar holds `config/{ActiveHudSettings,ArmorStatusConfig,ConfigRefresh}.class` and `assets/armorstatusneoforge/lang/en_us.json`.
+- Toolchain: `runClient` run WITHOUT `-Porg.gradle.java.installations.paths`; Foojay 1.0.0 downloaded `OpenJDK21U ... 21.0.12.1` into `~/.gradle/jdks` (11:27:11) and `downloadAssets` completed.
+- `runClient` 26.1.2, 26.2, 26.3 (no flag): `Armor Status NeoForge loaded (Kotlin 2.4.21)` then `[modloading-sync-worker/INFO] [...config.ActiveHudSettings/]: Armor Status settings: HudSettings(enabled=true, anchor=MIDDLE_LEFT, scale=1.0, showHead=true, showChest=true, showLegs=true, showFeet=true, displayMode=RAW, gradientColors=false)`; zero ERROR lines in `latest.log` on all three; `Sound engine started` seen on 26.1.2 and 26.2 (26.3 reached mod load and config, sound line not checked).
+- Generated `run/config/armorstatusneoforge-client.toml` (defaults): enabled=true, position="MIDDLE_LEFT" (allowed TOP_/MIDDLE_/BOTTOM_ x LEFT/RIGHT), scale=1.0 (range 0.5 ~ 2.0), showHelmet/showChestplate/showLeggings/showBoots=true, displayMode="RAW" (RAW, PERCENT), gradientColors=false, each with a comment.
+- Corruption (26.1.2): invalid values (`position="NOPE"`, `scale=99.0`, `showHelmet="maybe"`, `displayMode="WRONG"`) -> `ConfigTracker/CONFIG: Configuration file ... is not correct. Correcting`, then our refresh logged `anchor=MIDDLE_LEFT, scale=2.0, showHead=true, displayMode=RAW` (NeoForge clamps out-of-range numbers to the nearest bound and resets bad enums/booleans to defaults). Unparseable TOML (`enabled = tru`) -> `Failed to load config ... ParsingException ... Attempting to recreate`, file recreated with defaults (4 `.bak` backups, deleted), refresh logged defaults. Live edit of the file while the client runs fires `Reloading` and a new refresh line (seen, 3 lines for 2 edits). Our own `onFailure` warn path never fired at runtime (unit-covered in `RecoveryTest`).
+- NOT verified: the config screen was not opened or clicked (no GUI automation); `Mods > Armor Status NeoForge > Config` is a manual step. Enum values show as literal names.
+
+- Delivery strategy decided by user (2026-10-10): `stacked-to-main`. Push `main` (T1–T3, reviewed) as initial history; from T4 on each ~400-line slice is its own PR targeting `main` in sequence. Slice boundaries: slice A = T4 (+ T5 if under budget); recorded here as commits land.
+- T4 parent spot check: `build "-PmcVersion=26.3"` exit 0; `ConfigRefresh.kt` read back (small, no `!!`). Config screen NOT visually verified (manual: `.\gradlew.bat runClient "-PmcVersion=26.1.2"` > Mods > Armor Status NeoForge > Config). Foojay resolver 1.0.0 now provides JDK 21 for `downloadAssets`; supersedes the machine-specific flag from T2 and removes the CI JDK 21 concern (CI still needs network for the toolchain download).
+
 ## Next step
-T4: `ModConfigSpec` client config + `ConfigurationScreen` factory, wired to `HudSettings.sanitized` via `loadOrDefault`.
+T5: HUD renderer + `HudCanvas` adapter + layer registration (`RegisterGuiLayersEvent`), using `ActiveHudSettings` and `HudLayout`.

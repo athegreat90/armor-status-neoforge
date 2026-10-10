@@ -1,0 +1,14 @@
+{
+  "armorstatusneoforge.configuration.title": "Armor Status Settings",
+  "armorstatusneoforge.configuration.section.armorstatusneoforge.client.toml": "Armor Status Settings",
+  "armorstatusneoforge.configuration.section.armorstatusneoforge.client.toml.title": "Armor Status Settings",
+  "armorstatusneoforge.configuration.enabled": "Show Armor HUD",
+  "armorstatusneoforge.configuration.position": "HUD Position",
+  "armorstatusneoforge.configuration.scale": "HUD Scale",
+  "armorstatusneoforge.configuration.showHelmet": "Show Helmet",
+  "armorstatusneoforge.configuration.showChestplate": "Show Chestplate",
+  "armorstatusneoforge.configuration.showLeggings": "Show Leggings",
+  "armorstatusneoforge.configuration.showBoots": "Show Boots",
+  "armorstatusneoforge.configuration.displayMode": "Durability Display",
+  "armorstatusneoforge.configuration.gradientColors": "Gradient Colors"
+}
