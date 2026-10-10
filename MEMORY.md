@@ -7,7 +7,7 @@ Version-controlled project memory. Update at each milestone. Every result below 
 - Client-only NeoForge mod in Kotlin that shows worn armor durability (item icon + number) on the HUD. Targets Minecraft 26.1.2, 26.2 and 26.3, Java 25, language provider KotlinLangForge (KLF).
 - Unofficial, clean-room reimplementation inspired by ShirjeelPlays' Fabric mod Armor Status. Our code is MIT. See `ATTRIBUTION.md`.
 - Mod id `armorstatusneoforge`, group `io.github.athegreat90`, version `0.1.0`, author `athegreat90`.
-- Status on 2026-10-10: tasks T1 to T8 are done locally on branch `feat/armor-status-hud`. Nothing is pushed, no remote repository exists, no release or Modrinth page exists.
+- Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The private repository `athegreat90/armor-status-neoforge` exists and CI is green on `main`. No release, tag or Modrinth project exists; T11 (going public and publishing) awaits explicit user approval.
 
 ## Architecture decisions
 
@@ -74,11 +74,12 @@ Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEn
 
 - 2026-10-10: T1 scaffold, T2 spike (KLF loads on all three), T3 `common` domain, T4 client config, T5 HUD layer, T6 three-version runs, T7 Spotless/ktlint + metadata verification + wrapper checksum: done locally. Native reviews approved with only advisory findings.
 - T8 documentation: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, `.claude/rules/*` and this file are written.
-- 2026-10-10 F3 follow-up: the default left anchor covered the F3 debug text. First attempt (`hideWhenDebugScreen`, hide the HUD) was replaced after the user's in-game test by `debugScreenMode` (`COMPACT` default, `HIDE`, `KEEP`) and `debugScreenScale` (`0.6`, range `0.25` to `1.0`). While F3 is open in `COMPACT` the HUD is drawn at `scale * debugScreenScale` (icons, text and row gaps shrink, anchor unchanged). Pure rules in `common` (`shouldRender(..., debugScreenOpen)` hides only in `HIDE`; `HudSettings.effectiveScale(debugScreenOpen)`), detection in `neoforge/.../hud/DebugScreen.kt`. Compiled on the three targets; on-screen behaviour awaits the user's manual check.
-- 2026-10-10 F3 position follow-up: the compact rows still sat at the normal anchor, under the left F3 text column. New setting `debugScreenAnchor` (`HudAnchor`, default `BOTTOM_RIGHT`) is used only in `COMPACT` mode while F3 is open; `HIDE`/`KEEP` ignore it and with F3 closed `position` applies. Pure rule in `common`: `HudSettings.effectiveAnchor(debugScreenOpen)`; `ArmorStatusLayer` computes it once per frame next to `effectiveScale` and passes it to `LayoutCache` (the key already includes the anchor). Compiled on the three targets; on-screen placement awaits the user's manual check.
-- T9 CI and private remote: done; CI green on PR #1.
+- 2026-10-10 F3 follow-up: the default left anchor covered the F3 debug text. First attempt (`hideWhenDebugScreen`, hide the HUD) was replaced after the user's in-game test by `debugScreenMode` (`COMPACT` default, `HIDE`, `KEEP`) and `debugScreenScale` (`0.6`, range `0.25` to `1.0`). While F3 is open in `COMPACT` the HUD is drawn at `scale * debugScreenScale` (icons, text and row gaps shrink, anchor unchanged). Pure rules in `common` (`shouldRender(..., debugScreenOpen)` hides only in `HIDE`; `HudSettings.effectiveScale(debugScreenOpen)`), detection in `neoforge/.../hud/DebugScreen.kt`. Compiled on the three targets. The user's in-game check led to the position follow-up below.
+- 2026-10-10 F3 position follow-up: the compact rows still sat at the normal anchor, under the left F3 text column. New setting `debugScreenAnchor` (`HudAnchor`, default `BOTTOM_RIGHT`) is used only in `COMPACT` mode while F3 is open; `HIDE`/`KEEP` ignore it and with F3 closed `position` applies. Pure rule in `common`: `HudSettings.effectiveAnchor(debugScreenOpen)`; `ArmorStatusLayer` computes it once per frame next to `effectiveScale` and passes it to `LayoutCache` (the key already includes the anchor). Compiled on the three targets. The user confirmed it in game on 26.2 (see "Manual verification").
+- T9 CI and private remote: done; CI green on PR #1 and on `main`.
 - T10 release workflow and Minotaur dry run: written and dry-run locally; the workflow itself has not run on GitHub.
-- T11: stop and wait for explicit user approval before going public, tagging or publishing.
+- PR #1 merged (merge commit `3c2e81e`, 2026-10-10); CI on `main` green on all three targets (run 38064670429). The dev server used for testing was stopped.
+- T11: stop and wait for explicit user approval before going public, tagging or publishing. A draft Modrinth summary and description were written for the user; nothing was published.
 
 ## Test results
 
@@ -100,16 +101,20 @@ F3 position follow-up smoke (2026-10-10): `runClient "-PmcVersion=26.2" "-Pquick
 
 Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 and 26.2 and `rows=3` (chest hidden, right-aligned) on 26.3; the probe was removed afterwards. Config corruption on 26.1.2 was corrected by NeoForge or recreated with defaults.
 
-**Not verified:** anything visual (icons, positions, shadow, overlap with the vanilla HUD, F1, F3 hiding, spectator, GUI scales 1 to 4), the config screen, joining a vanilla server with the mod installed.
+### Manual verification (2026-10-10, Minecraft 26.2 only)
+
+The user ran the dev client against the NeoForge dev server (`runServer` and `runClient "-PmcVersion=26.2"`) and confirmed the HUD in game ("It's perfect"). For the F3 behaviour the user checked two screenshots: the compact HUD at `MIDDLE_LEFT` sat under the F3 text (which led to `debugScreenAnchor`), and with the default `BOTTOM_RIGHT` the F3 text is fully readable and the compact armor stack sits in the bottom-right corner.
+
+**Not verified:** the same checks on 26.1.2 and 26.3 (compile and log smoke only); GUI scales 1 to 4, spectator, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen (no recorded check); the config screen (no recorded check); joining a vanilla (non-NeoForge) server with the mod installed.
 
 ## Known issues
 
-- No visual verification yet (manual checklist pending).
+- Visual checks are done on 26.2 only (default settings and the F3 compact layout). The rest of the manual checklist is pending, see "Manual verification".
 - 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
 - Config screen shows raw enum names.
 - Joining a vanilla server is untested; client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
 - No offhand handling and no special elytra handling, as upstream.
-- No original mod icon yet.
+- Original mod icon added (`artwork/icon.svg`, `neoforge/src/main/resources/icon.png`); in-game mod-list appearance has not been verified.
 - ktlint 1.8.0 embeds Kotlin 2.2.21; a future 2.3/2.4-only syntax could fail to parse. Bump ktlint when a newer one ships; do not suppress.
 - Explicit `[[dependencies]]` on `klf` breaks the dev run (`Actual version: [MISSING]`).
 - PowerShell splits an unquoted `-PmcVersion=26.2` at the dot; always quote it.
@@ -117,13 +122,14 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 
 ## CI/CD
 
-- Private repository `athegreat90/armor-status-neoforge` exists (visibility verified `PRIVATE` on 2026-10-10). `main` holds the reviewed T1 to T3 history; everything else is on `feat/armor-status-hud` and PR #1.
+- Private repository `athegreat90/armor-status-neoforge` exists (visibility verified `PRIVATE` on 2026-10-10). `main` holds the full history up to the merge of PR #1 (`3c2e81e`); feature branches are merged and no longer needed.
 - `ci.yml` exists: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3 (`fail-fast: false`); Temurin 25; `spotlessCheck`, `:common:test`, `check build "-PmcVersion=<v>"`, jar upload (test reports on failure); actions pinned by full SHA (checkout v7.0.1, setup-java v6.0.1, gradle/actions v6.4.0, upload-artifact v7.0.2); `permissions: contents: read`; concurrency cancel.
 - First run on PR #1 (run 38059858897, 2026-10-10): all three jobs green, jars uploaded (about 53 KB each, nothing shaded). This confirmed Temurin 25 resolves on `ubuntu-latest` and that the Foojay JDK 21 download works on the runner. The `gradlew` executable bit had to be set in the git index (`100755`) because it is committed from Windows.
 - Runner annotations to act on later: Gradle 9.2.1 is flagged "out of date" and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
-- `release.yml` is written but has NEVER run (it must be on the default branch first). Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
+- CI on `main` after the merge (run 38064670429, `3c2e81e`): all three jobs green.
+- `release.yml` is on `main` now but has NEVER run. Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
 - Local proof (2026-10-10): `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` succeeds without a token and prints the planned payload; Minotaur debug mode makes two read-only GETs to api.modrinth.com. A real upload requires `MODRINTH_TOKEN` in the environment, `MODRINTH_PROJECT_ID` and `-PmodrinthDryRun=false`.
-- First exercise to schedule after PR #1 merges: run `release.yml` through `workflow_dispatch` (dry run). Before a real tag, add a `[0.1.0]` section to `CHANGELOG.md`.
+- First exercise to schedule (needs the user's go-ahead): run `release.yml` through `workflow_dispatch` (dry run). Before a real tag, add a `[0.1.0]` section to `CHANGELOG.md`.
 - Needed from the user: Modrinth project, repository secret `MODRINTH_TOKEN`, repository variable `MODRINTH_PROJECT_ID`. Neither exists. Never store them here.
 
 ## Local development
@@ -147,10 +153,9 @@ Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 
 
 ## Next steps
 
-1. Review and merge PR #1 (user decision). It is one PR with a documented size exception, chosen over stacked slices because `ci.yml` and the gates only land in the last slices.
-2. T10: release workflow and a Minotaur dry run; licence and attribution review.
-3. T11: stop and ask for explicit approval before making the repository public or publishing.
-4. Create an original mod icon (none exists).
-5. Manual visual checklist on each version: four armor pieces, partial and near-broken damage, empty slots, spectator, F1, F3 (HUD compact and closer together by default; `debugScreenMode = "HIDE"` hides it, `"KEEP"` leaves it unchanged, `debugScreenScale` changes the compact size, `debugScreenAnchor` (default `BOTTOM_RIGHT`) moves the compact HUD out from under the F3 text; check it against the left and right F3 columns, including a targeted block that lengthens the right column), GUI scales 1 to 4, all six anchors, config screen, world join and leave.
-6. Join a vanilla server with the mod installed.
-7. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
+1. T11: stop and ask for explicit approval before each of these: making the repository public, creating the Modrinth project (secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`), adding a `[0.1.0]` section to `CHANGELOG.md`, dry-running `release.yml` with `workflow_dispatch`, and tagging.
+2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `logoFile = "icon.png"` and `logoBlur = false`.
+3. Finish the manual visual checklist: 26.2 is done for the default layout and F3. Still open on 26.1.2 and 26.3, and on 26.2 for partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
+4. Join a vanilla server with the mod installed.
+5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
+6. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).

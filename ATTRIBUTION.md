@@ -33,7 +33,7 @@ This section describes the situation found on that date. It is not legal advice.
 
 ## Original work in this repository
 
-All code, documentation and build scripts here are released under the [MIT licence](LICENSE), copyright 2026 athegreat90. The mod has no icon yet; an original one is planned.
+All code, documentation, build scripts and original icon artwork here are released under the [MIT licence](LICENSE), copyright 2026 athegreat90. The steel-blue chestplate and segmented durability meter were created for this mod, without copying Minecraft textures or upstream artwork. The editable source is `artwork/icon.svg`; `neoforge/src/main/resources/icon.png` is its 512x512 nearest-neighbor export from a 32x32 grid.
 
 ## Third-party tools and dependencies
 

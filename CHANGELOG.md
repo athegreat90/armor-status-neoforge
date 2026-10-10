@@ -10,6 +10,7 @@ Nothing has been released yet. The list below describes what exists in the repos
 
 ### Added
 
+- Original pixel-art chestplate and durability-meter mod icon, with editable SVG source and a 512x512 PNG displayed without blur in the mod list.
 - Armor Status HUD layer for NeoForge: item icon and remaining durability for head, chest, legs and feet, in rows at one of six anchors, with scale 0.5 to 2.0.
 - `RAW` and `PERCENT` display modes and optional green-to-red gradient colours (off by default).
 - Visibility rule: hidden when disabled, without a player, while spectating, or when the HUD is hidden with F1.

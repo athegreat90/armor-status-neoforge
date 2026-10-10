@@ -69,11 +69,11 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 - Exception: NeoForge-bound code has no unit-test harness. Prove it by compiling all three targets, `check`, and `runClient`. Say so in the commit or `MEMORY.md`.
 - Never report unit tests as runtime verification. Record what was run, with date and outcome, in `MEMORY.md`.
 
-## GitHub Actions and Modrinth (PLAN, not implemented yet)
+## GitHub Actions and Modrinth
 
-- Planned `ci.yml`: matrix over the three versions; Spotless, `:common:test`, `build`, `verifyModMetadata`, upload jars; actions pinned by full SHA; `permissions: contents: read`.
-- Planned `release.yml`: tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; 26.3 as `beta` until NeoForge 26.3 has a stable build.
-- Secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`. Neither exists yet.
+- `.github/workflows/ci.yml` (running, green on `main`): matrix over the three versions; Spotless, `:common:test`, `check build`, upload jars; actions pinned by full SHA; `permissions: contents: read`.
+- `.github/workflows/release.yml` (on `main`, **never run**): tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; 26.3 as `beta` until NeoForge 26.3 has a stable build. `workflow_dispatch` is always a dry run. A real tag needs a `[0.1.0]` section in `CHANGELOG.md`.
+- Secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`. Neither exists yet; never store them in the repository.
 
 ## Attribution and licensing
 
