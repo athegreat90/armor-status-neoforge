@@ -10,7 +10,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - No public push, no release, no force-push without separate explicit approval.
 - Commits: Conventional Commits, no Co-Authored-By / AI attribution.
 - Kotlin 2.4.21, ModDevGradle 2.0.148, KLF `2.15.0-k2.4.21-3.1+neoforge`, Gradle wrapper 9.2.1.
-- Planning heuristic: ~400 authored changed lines per task (advisory only). Delivery budget: slice into chained PRs above ~400 lines (strategy: `ask-on-risk`, pending).
+- Planning heuristic: ~400 authored changed lines per task (advisory only). Delivery budget: slice into chained PRs above ~400 lines (strategy: `stacked-to-main`, amended by the user to one PR with a size exception; PR #1 merged).
 
 ## Tasks
 - [x] T1 Scaffold (commit 59cbe40): dir, git init (done), .gitignore, .editorconfig, wrapper 9.2.1, settings/build scripts, version props, empty `common` + `neoforge`. Accept: `gradlew.bat build` passes for 26.1.2.
@@ -187,7 +187,8 @@ F3 position follow-up (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 
 - F3 follow-up manually verified by the user (2026-10-10): screenshots `neoforge/run/screenshots/2026-10-10_17.22.58.png` (compact HUD hidden under the F3 text at MIDDLE_LEFT, which motivated the anchor setting) and `2026-10-10_17.31.05.png` (F3 text fully readable, compact armor stack in the bottom-right corner). User verdict: "It's perfect". Tested on 26.2 against the NeoForge dev server; 26.1.2 and 26.3 compile only for this follow-up.
 - Review F3 follow-up (slice base `2f493bb`, 13 files, 429 lines): medium (`slice_budget_reached`), consent granted, 1-lens review approved with zero findings, acknowledged and burned (lineage `review-a6364addab9bd17f`). Reviewed boundary advances to `dc89dd3`. Commits: `d33823b` (hide), `2115bf1` (compact + scale), `dc89dd3` (configurable F3 anchor); pushed to PR #1.
-- Dev environment state: NeoForge dev server (26.2, PID 7224, `neoforge/run/server`) is still running; the dev client was closed by the user. A throwaway Gradle init script in the scratchpad (not in the repo) provides the server run dir and auto-join. `eula=true` in `neoforge/run/eula.txt` was written earlier by a writer agent (disclosed to the user).
+- Merge (2026-10-10): the user asked to merge PR #1 and stop the server. PR #1 was merged with a merge commit (`3c2e81e`), the dev server was stopped, and CI on `main` (run 38064670429) is green on 26.1.2, 26.2 and 26.3. The user also asked for a Modrinth summary and description; drafts were given in chat, nothing was published.
+- Dev environment state (historical, before the merge): NeoForge dev server (26.2, PID 7224, `neoforge/run/server`) was running; the dev client was closed by the user. Both are stopped now. A throwaway Gradle init script in the scratchpad (not in the repo) provides the server run dir and auto-join. `eula=true` in `neoforge/run/eula.txt` was written earlier by a writer agent (disclosed to the user).
 
 ## Next step
-T11 STOP: report to the user and wait for explicit approval before making the repo public, merging release-affecting changes, creating tags or publishing. PR #1 awaits the user's review and merge.
+T11 STOP: wait for explicit approval before making the repo public, creating the Modrinth project and its secret and variable, adding the `[0.1.0]` changelog section, dry-running `release.yml`, creating tags or publishing. PR #1 is merged.
