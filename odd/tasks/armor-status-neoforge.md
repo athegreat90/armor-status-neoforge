@@ -14,7 +14,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 
 ## Tasks
 - [x] T1 Scaffold (commit 59cbe40): dir, git init (done), .gitignore, .editorconfig, wrapper 9.2.1, settings/build scripts, version props, empty `common` + `neoforge`. Accept: `gradlew.bat build` passes for 26.1.2.
-- [ ] T2 Spike: minimal `@Mod` object + mods.toml + KLF dep; `runClient` on 26.1.2, 26.2, 26.3. Resolves plan §17 unknowns.
+- [x] T2 Spike: minimal `@Mod` object + mods.toml + KLF dep; `runClient` on 26.1.2, 26.2, 26.3. Resolves plan §17 unknowns.
 - [ ] T3 `common` domain: models, durability calc, layout, settings + validation (RED→GREEN). Accept: `:common:test` green.
 - [ ] T4 Config: `ModConfigSpec` binding + `ConfigurationScreen` factory + Result-based fallback.
 - [ ] T5 HUD renderer + `HudCanvas` adapter + layer registration. Accept: manual checklist on 26.1.2.
@@ -32,11 +32,14 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - T1 closed: parent spot check `:common:test --rerun-tasks` exit 0; added `.gitattributes`; committed as `59cbe40` (`chore: scaffold gradle multi-target kotlin project`, 19 files, 650 lines).
 - T1 native review: assessed high (`process_boundary`, `buildAll` Exec), consent granted by user, 4-lens review approved, acknowledged and burned (lineage `review-ef54dc2cf78b7862`, base = empty tree, since this was the root commit). Only advisory findings, tracked below as follow-ups.
 - Follow-ups from advisory findings (non-blocking): wrapper has no `distributionSha256Sum` (R1-001, fix in T7); `buildAll` failure path (R3); placeholder `Durability.kt` and its single-case test are throwaway, replaced by real tests in T3 (R3 coverage, R2); `MOD_ID` duplicated between `ModConstants.kt` and properties (R2), revisit in T2; `jvmToolchain(25)` repeated (R2).
+- T2 writer (2026-10-10): added `neoforge/src/main/templates/META-INF/neoforge.mods.toml` (rendered by `generateModMetadata`, MDK pattern), `ArmorStatusNeoForge.kt` (`@Mod(value = MOD_ID, dist = [Dist.CLIENT]) object`, logs one INFO line plus a throwaway `:common` probe), a `server` run (for the dedicated-server check only) and the metadata task in `neoforge/build.gradle.kts`. `MOD_ID` stays in `ModConstants.kt`; `mod_id` in `gradle.properties` is still a second copy (T7 metadata validation should assert they match).
+- T2 environment finding: MDG `downloadAssets` needs a Java 21 toolchain; only JDK 25 is installed, so runs used `-Porg.gradle.java.installations.paths=<VS Code redhat.java JRE 21>`. Machine-specific; CI (T9) needs JDK 21 beside 25 or a toolchain resolver.
 
 ## Route declaration
 | Task | Route | Trigger evidence |
 |---|---|---|
 | T1 | delegated direct (one writer) | 2+ non-trivial files |
+| T2 | delegated direct (one writer) | needs runClient x3 + reading KLF sources (>5 lookups) |
 
 ## Verification evidence
 T1 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
@@ -50,5 +53,18 @@ T1 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - `.\gradlew.bat buildAll`: BUILD SUCCESSFUL; runs build-mc26.1.2, build-mc26.2, build-mc26.3 in order (second run, tasks up-to-date).
 - Plan §17 unknown resolved: Gradle 9.2.1 + MDG 2.0.148 + KGP 2.4.21 + JDK 25 work together for all three targets (compile only; runtime not yet exercised).
 
+T2 (observed 2026-10-10, dev client, native Windows 11, JDK 25.0.2 + JRE 21 for MDG assets):
+- `.\gradlew.bat build -PmcVersion={26.1.2,26.2,26.3}`: BUILD SUCCESSFUL each; jar holds `META-INF/neoforge.mods.toml` rendered with `modLoader = "klf"`, `loaderVersion = "[1,)"`, `license = "MIT"`, neoforge range `[26.1.2.115,)` / `[26.2.0.89,)` / `[26.3.0.64-beta,)` and minecraft range `[26.1.2]` / `[26.2]` / `[26.3]`, both `side = "CLIENT"`; classes `ArmorStatusNeoForge`, `ModConstantsKt`, `DurabilityKt` (common) in the jar.
+- `.\gradlew.bat runClient -PmcVersion=26.1.2` (FML 11.0.15): Mod List shows `Armor Status NeoForge 0.1.0 (armorstatusneoforge)` and `KotlinLangForge 2.15.0-k2.4.21-3.1+neoforge (klf)`; `[modloading-worker-0/INFO] [io.github.athegreat90.armorstatus.ArmorStatusNeoForge/]: Armor Status NeoForge loaded (Kotlin 2.4.21, common probe 75%)`; reached the title screen/sound engine, no ERROR lines.
+- `runClient -PmcVersion=26.2` (FML 11.0.16, NeoForge 26.2.0.89): same Mod List entries (Minecraft 26.2) and the same mod log line; `Sound engine started`; no ERROR lines.
+- `runClient -PmcVersion=26.3` (FML 12.0.9, NeoForge 26.3.0.64-beta): same Mod List entries (Minecraft 26.3) and the same mod log line; `Sound engine started`; no ERROR lines.
+- Loader range: provider jar manifest `Implementation-Version: 2.15.0`; with `loaderVersion = "[3,)"` FML fails: `Language loader klf version 2.15.0 is incompatible with [3,)` / `needs language provider klf:3 or above to load`. `[1,)` accepted (all runs above); `[2,)` accepted by inference (2.15.0 in range), not run.
+- `runServer -PmcVersion=26.1.2` (DEDICATED_SERVER in DEV): Mod List lists both mods, server reached `Done (1.925s)!`, our log line absent (entrypoint not instantiated). Only ERROR was the first-run `NoSuchFileException: server.properties` from vanilla. No client connected (UNVERIFIED: vanilla-client-to-server join).
+- Explicit `[[dependencies]]` on `klf` (`versionRange="[2,)"`, `type="required"`): rejected in dev: `Mod ID: 'klf', Requested by: 'armorstatusneoforge', Expected range: '[2,)', Actual version: '[MISSING]'`. Reverted; not needed.
+- All processes started by the spike (wrapper, client/server JVMs) were killed by PID; no other java process touched.
+
+- T2 parent spot check: `gradlew.bat build "-PmcVersion=26.2"` exit 0; rendered mods.toml read back from the jar. Windows gotcha: PowerShell splits an unquoted `-PmcVersion=26.2` at the dot (Gradle sees `26`), so docs and CI must quote it: `"-PmcVersion=26.2"`.
+- T2 open items: throwaway `:common` probe in `ArmorStatusNeoForge.kt` is removed in T5; vanilla-client join to a server stays UNVERIFIED (needs manual test in Phase 4); `eza` is not installed locally (use Read/Glob tools).
+
 ## Next step
-T2 spike: minimal `@Mod` object + `neoforge.mods.toml` + `runClient` on 26.1.2, 26.2, 26.3.
+T3: `common` domain (models, durability calc, layout, settings + validation) test-first.

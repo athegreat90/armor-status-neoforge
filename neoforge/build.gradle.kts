@@ -9,6 +9,9 @@ evaluationDependsOn(":common")
 
 val modId = property("mod_id") as String
 val modVersion = property("mod_version") as String
+val modName = property("mod_name") as String
+val modLicense = property("mod_license") as String
+val modAuthors = property("mod_authors") as String
 val mcVersion = property("mcVersion") as String
 
 // Per-target values (NeoForge build, Minecraft range) live in gradle/mc/<mcVersion>.properties.
@@ -50,6 +53,11 @@ neoForge {
         register("client") {
             client()
         }
+        // Used only to check that the client-only mod stays inert on a dedicated server.
+        register("server") {
+            server()
+            programArgument("--nogui")
+        }
     }
 }
 
@@ -58,6 +66,25 @@ dependencies {
     // KotlinLangForge is a mod loader provider; it is not shaded and not a remapped mod dependency.
     implementation("dev.nyon:KotlinLangForge:2.15.0-k2.4.21-3.1+neoforge")
 }
+
+// Renders src/main/templates (neoforge.mods.toml) with the values of gradle.properties and gradle/mc/<mc>.properties.
+val generateModMetadata = tasks.register<ProcessResources>("generateModMetadata") {
+    val replaceProperties = mapOf(
+        "mod_id" to modId,
+        "mod_name" to modName,
+        "mod_version" to modVersion,
+        "mod_license" to modLicense,
+        "mod_authors" to modAuthors,
+        "neo_version" to mc.getProperty("neo_version"),
+        "minecraft_version_range" to mc.getProperty("minecraft_version_range"),
+    )
+    inputs.properties(replaceProperties)
+    expand(replaceProperties)
+    from("src/main/templates")
+    into(layout.buildDirectory.dir("generated/sources/modMetadata"))
+}
+sourceSets.main.get().resources.srcDir(generateModMetadata)
+neoForge.ideSyncTask(generateModMetadata)
 
 // Ship common's classes inside the mod jar (no third-party libraries are shaded).
 tasks.jar {
