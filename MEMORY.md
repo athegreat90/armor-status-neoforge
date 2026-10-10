@@ -114,7 +114,7 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 - Config screen shows raw enum names.
 - Joining a vanilla server is untested; client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
 - No offhand handling and no special elytra handling, as upstream.
-- No original mod icon yet.
+- Original mod icon added (`artwork/icon.svg`, `neoforge/src/main/resources/icon.png`); in-game mod-list appearance has not been verified.
 - ktlint 1.8.0 embeds Kotlin 2.2.21; a future 2.3/2.4-only syntax could fail to parse. Bump ktlint when a newer one ships; do not suppress.
 - Explicit `[[dependencies]]` on `klf` breaks the dev run (`Actual version: [MISSING]`).
 - PowerShell splits an unquoted `-PmcVersion=26.2` at the dot; always quote it.
@@ -154,7 +154,7 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 ## Next steps
 
 1. T11: stop and ask for explicit approval before each of these: making the repository public, creating the Modrinth project (secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`), adding a `[0.1.0]` section to `CHANGELOG.md`, dry-running `release.yml` with `workflow_dispatch`, and tagging.
-2. Create an original mod icon (none exists).
+2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `logoFile = "icon.png"` and `logoBlur = false`.
 3. Finish the manual visual checklist: 26.2 is done for the default layout and F3. Still open on 26.1.2 and 26.3, and on 26.2 for partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
 4. Join a vanilla server with the mod installed.
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
