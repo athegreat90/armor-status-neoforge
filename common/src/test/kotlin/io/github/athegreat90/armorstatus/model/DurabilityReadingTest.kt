@@ -22,7 +22,11 @@ class DurabilityReadingTest {
         "363, -10, 363",
         "1, 0, 1",
     )
-    fun `remaining is max minus clamped damage`(max: Int, damage: Int, expectedRemaining: Int) {
+    fun `remaining is max minus clamped damage`(
+        max: Int,
+        damage: Int,
+        expectedRemaining: Int,
+    ) {
         assertEquals(Damageable(remaining = expectedRemaining, max = max), readDurability(max, damage))
     }
 
@@ -34,7 +38,11 @@ class DurabilityReadingTest {
 
     @ParameterizedTest(name = "{0}/{1} -> {2}")
     @CsvSource("363, 363, 1.0", "0, 363, 0.0", "25, 100, 0.25", "150, 200, 0.75")
-    fun `fraction is remaining over max`(remaining: Int, max: Int, expected: Double) {
+    fun `fraction is remaining over max`(
+        remaining: Int,
+        max: Int,
+        expected: Double,
+    ) {
         assertEquals(expected, Damageable(remaining, max).fraction, 1e-12)
     }
 

@@ -4,7 +4,10 @@ package io.github.athegreat90.armorstatus.layout
 enum class VerticalAlign { TOP, MIDDLE, BOTTOM }
 
 /** The six screen positions the armor HUD can be pinned to. */
-enum class HudAnchor(val isLeft: Boolean, val vertical: VerticalAlign) {
+enum class HudAnchor(
+    val isLeft: Boolean,
+    val vertical: VerticalAlign,
+) {
     TOP_LEFT(isLeft = true, vertical = VerticalAlign.TOP),
     MIDDLE_LEFT(isLeft = true, vertical = VerticalAlign.MIDDLE),
     BOTTOM_LEFT(isLeft = true, vertical = VerticalAlign.BOTTOM),

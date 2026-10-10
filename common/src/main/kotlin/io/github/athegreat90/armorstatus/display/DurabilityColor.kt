@@ -31,7 +31,12 @@ fun durabilityColor(fraction: Double): Int {
         interpolate(from, to, t, shift = 0)
 }
 
-private fun interpolate(from: Int, to: Int, t: Double, shift: Int): Int {
+private fun interpolate(
+    from: Int,
+    to: Int,
+    t: Double,
+    shift: Int,
+): Int {
     val start = (from shr shift) and 0xFF
     val end = (to shr shift) and 0xFF
     return (start + (end - start) * t).roundToInt()

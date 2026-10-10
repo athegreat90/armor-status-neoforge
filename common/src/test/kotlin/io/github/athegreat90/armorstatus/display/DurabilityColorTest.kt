@@ -26,13 +26,19 @@ class DurabilityColorTest {
         "0.5, 0xFFFFAA55",
         "0.1, 0xFFAA0055",
     )
-    fun `colour follows the gradient`(fraction: Double, expected: String) {
+    fun `colour follows the gradient`(
+        fraction: Double,
+        expected: String,
+    ) {
         assertEquals(argb(java.lang.Long.decode(expected)), durabilityColor(fraction))
     }
 
     @ParameterizedTest(name = "out-of-range {0} -> {1}")
     @CsvSource("1.5, 0xFF55FF55", "-0.3, 0xFFAA00AA", "Infinity, 0xFF55FF55", "-Infinity, 0xFFAA00AA")
-    fun `fraction is clamped`(fraction: Double, expected: String) {
+    fun `fraction is clamped`(
+        fraction: Double,
+        expected: String,
+    ) {
         assertEquals(argb(java.lang.Long.decode(expected)), durabilityColor(fraction))
     }
 

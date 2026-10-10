@@ -8,7 +8,10 @@ sealed interface DurabilityReading {
      * @property remaining uses left, in `0..max`.
      * @property max the item's total durability, always positive.
      */
-    data class Damageable(val remaining: Int, val max: Int) : DurabilityReading {
+    data class Damageable(
+        val remaining: Int,
+        val max: Int,
+    ) : DurabilityReading {
         init {
             require(max > 0) { "max must be positive, was $max" }
             require(remaining in 0..max) { "remaining must be in 0..$max, was $remaining" }
@@ -28,7 +31,10 @@ sealed interface DurabilityReading {
  * A non-positive [maxDamage] means the item cannot be damaged. [damage] is clamped into `0..maxDamage`,
  * so malformed data never produces a negative or oversized remaining value.
  */
-fun readDurability(maxDamage: Int, damage: Int): DurabilityReading =
+fun readDurability(
+    maxDamage: Int,
+    damage: Int,
+): DurabilityReading =
     if (maxDamage <= 0) {
         DurabilityReading.NotDamageable
     } else {

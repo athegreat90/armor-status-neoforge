@@ -66,11 +66,12 @@ data class HudLayout(
                 rowCount = rowCount,
                 rowHeight = rowHeight,
                 totalHeight = totalHeight,
-                originY = when (anchor.vertical) {
-                    VerticalAlign.TOP -> MARGIN
-                    VerticalAlign.MIDDLE -> (height - totalHeight) / 2
-                    VerticalAlign.BOTTOM -> height - totalHeight - MARGIN
-                },
+                originY =
+                    when (anchor.vertical) {
+                        VerticalAlign.TOP -> MARGIN
+                        VerticalAlign.MIDDLE -> (height - totalHeight) / 2
+                        VerticalAlign.BOTTOM -> height - totalHeight - MARGIN
+                    },
                 iconX = iconX,
                 textX = if (anchor.isLeft) iconX + ICON_SIZE + ICON_TEXT_GAP else iconX - ICON_TEXT_GAP,
                 textOffsetY = (ICON_SIZE - fontHeight) / 2 + 1,
