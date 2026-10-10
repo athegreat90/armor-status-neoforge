@@ -17,7 +17,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - [x] T2 Spike: minimal `@Mod` object + mods.toml + KLF dep; `runClient` on 26.1.2, 26.2, 26.3. Resolves plan §17 unknowns.
 - [x] T3 `common` domain: models, durability calc, layout, settings + validation (RED→GREEN). Accept: `:common:test` green.
 - [x] T4 Config: `ModConfigSpec` binding + `ConfigurationScreen` factory + Result-based fallback.
-- [ ] T5 HUD renderer + `HudCanvas` adapter + layer registration. Accept: manual checklist on 26.1.2.
+- [x] T5 HUD renderer + `HudCanvas` adapter + layer registration. Accept: manual checklist on 26.1.2.
 - [ ] T6 Port to 26.2 and 26.3; binary-compat check. Accept: 3 builds + 3 smoke tests.
 - [ ] T7 Spotless + ktlint, metadata validation task, jar naming.
 - [ ] T8 Docs: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, rules, MEMORY.md.
@@ -38,6 +38,8 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - T3 decisions: PERCENT = round half up, but 0% only when remaining == 0 and 100% only when undamaged (clamped to 1..99 otherwise). Gradient stops (fraction -> RGB): 1.0 55FF55, 0.8 AAFF55, 0.6 FFFF55, 0.4 FF5555, 0.2 AA0000, 0.0 AA00AA; NaN treated as full durability. `HudSettings.scale` is `Float` and validated in `init` (illegal states unrepresentable); `sanitized` takes `Double` and coerces. `HudLayout.textX` is the left edge for left anchors and the right edge for right anchors (`textRightAligned`).
 - T4 writer (2026-10-10): added `neoforge/.../config/{ArmorStatusConfig,ActiveHudSettings,ConfigRefresh}.kt`, `assets/armorstatusneoforge/lang/en_us.json`, and the Foojay toolchain resolver `1.0.0` in `settings.gradle.kts`. `ArmorStatusNeoForge` changed from `object` to `class(modBus: IEventBus, container: ModContainer)` (constructor injection is impossible on an `object`). No new pure logic in `common` (existing `HudSettings.sanitized` + `loadOrDefault` reused), so no new unit tests. T4 checkbox left unchecked for the parent.
 - T4 decisions: enum config values are shown by their literal name in the screen (`common` has no Minecraft dependency, so it cannot implement `TranslatableEnum`); NeoForge corrects invalid values in the file before our code reads them, so the `loadOrDefault` failure path stays as defense in depth only; one INFO line per refresh logs the resulting settings.
+- T5 writer (2026-10-10): added `neoforge/.../hud/{ArmorStatusLayer,HudCanvas,HudRegistration}.kt`, per-version `Minecraft.isHudHidden()` in `neoforge/src/v26_1/kotlin/.../hud/HudHidden.kt` (26.1.x: `Options#hideGui`) and `neoforge/src/v26_2/kotlin/.../hud/HudHidden.kt` (26.2 and 26.3: `gui.hud.isHidden()`); overlay chosen in `neoforge/build.gradle.kts` from `mcVersion`; `-PquickPlay=<save>` dev-only client argument; `ArmorStatusNeoForge` calls `HudRegistration.register(modBus)`. New pure logic in `:common`, test-first: `LayoutCache` and `DurabilityTextCache` (+26 tests). T5/T6 checkboxes left unchecked for the parent.
+- T5 decisions: layer registered `registerBelow(VanillaGuiLayers.CHAT, armorstatusneoforge:armor_status)` (above hotbar/bars/scoreboard, below chat/tab list/subtitles); no `v26_3` overlay needed (compiles unchanged); `HudCanvas` is a `@JvmInline value class` (no per-frame allocation); text width cached by string identity; render body `try/catch Throwable` with `isFatal()` rethrow and one-shot `failed` flag (note: `LinkageError` counts as fatal, so a binary mismatch on another MC version would crash instead of disabling the HUD).
 
 ## Route declaration
 | Task | Route | Trigger evidence |
@@ -46,6 +48,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 | T2 | delegated direct (one writer) | needs runClient x3 + reading KLF sources (>5 lookups) |
 | T3 | delegated direct (one writer) | 19 non-trivial files |
 | T4 | delegated direct (one writer) | NeoForge API lookups + 3 runClient runs (>5 lookups) |
+| T5 | delegated direct (one writer) | 7+ non-trivial files, MC source reading (>5 lookups), runClient smoke |
 
 ## Verification evidence
 T1 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
@@ -97,5 +100,21 @@ T4 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - Delivery strategy decided by user (2026-10-10): `stacked-to-main`. Push `main` (T1–T3, reviewed) as initial history; from T4 on each ~400-line slice is its own PR targeting `main` in sequence. Slice boundaries: slice A = T4 (+ T5 if under budget); recorded here as commits land.
 - T4 parent spot check: `build "-PmcVersion=26.3"` exit 0; `ConfigRefresh.kt` read back (small, no `!!`). Config screen NOT visually verified (manual: `.\gradlew.bat runClient "-PmcVersion=26.1.2"` > Mods > Armor Status NeoForge > Config). Foojay resolver 1.0.0 now provides JDK 21 for `downloadAssets`; supersedes the machine-specific flag from T2 and removes the CI JDK 21 concern (CI still needs network for the toolchain download).
 
+T5 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
+- RED: `LayoutCacheTest` + `DurabilityTextCacheTest` written first; `:common:test` failed at `compileTestKotlin` with `Unresolved reference 'LayoutCache'` (compile-level RED only, same exception as T3). GREEN after implementing: `.\gradlew.bat :common:test --rerun-tasks` BUILD SUCCESSFUL; XML sum 249 tests (223 + LayoutCache 15 + DurabilityTextCache 11), 0 skipped, 0 failures, 0 errors.
+- NeoForge-bound code has no unit-test harness; its proof is compilation on 3 targets and runClient below.
+- `.\gradlew.bat build "-PmcVersion={26.1.2,26.2,26.3}"`: BUILD SUCCESSFUL each, no Kotlin warnings. Jar bytecode check (`javap` on `HudHiddenKt`): 26.1.2 -> `Options.hideGui`; 26.2 and 26.3 -> `Gui.hud` + `Hud.isHidden()`.
+- Sources read from `neoforge/build/moddev/artifacts/minecraft-patched-<neo>-sources.jar` and `~/.gradle/.../neoforge-<ver>-sources.jar`: `GuiLayer`, `RegisterGuiLayersEvent`, `GuiGraphicsExtractor.{item,text,pose,guiWidth,guiHeight}`, `Font.{width,lineHeight}`, `ItemStack`, `EquipmentSlot`, `LivingEntity.getItemBySlot`, `Identifier.fromNamespaceAndPath` are identical on all three; only the hide-GUI access differs.
+- runClient 26.1.2 `-PquickPlay=TestWorld` (world copied from the dev server world; test datapack `armor_test` equips diamond armor with damage 100/200/50/400 every tick): log `Found new data pack file/armor_test, loading it automatically`; temporary one-shot probe (removed afterwards) logged `ArmorStatusLayer/]: SMOKE first draw rows=4 texts=263/29 anchor=MIDDLE_LEFT`. After editing the config live to BOTTOM_RIGHT / scale 1.5 / PERCENT / gradient / chest off, `ActiveHudSettings` logged the new settings and rendering continued for 15+ s. `latest.log`: 0 lines matching `ERROR|Exception`, no `HUD failed`.
+- runClient 26.3 (world generated by `runServer` 26.3, same datapack, config as above): `SMOKE first draw rows=3 texts=72%/7% anchor=BOTTOM_RIGHT` (rows packed without chest; right-aligned path), ~30 s in world, 0 `ERROR|Exception`. A 26.1.2-saved world first stops on NeoForge's "mods have version differences" confirmation screen (cannot be clicked headless), hence the fresh 26.3 world.
+- 26.2 runClient NOT run (only compiled); the 26.2 path equals 26.3's source overlay.
+- Processes: client/server JVMs killed by PID (9880, 32992, 10600, 9900); Gradle daemon left running.
+- NOT verified: anything visual (icon drawn, text position, shadow, overlap with vanilla HUD), F1 hiding, spectator, GUI scales 1-4, vanilla-server join. The probe was removed; the final jar contains no probe.
+
+- T5 parent spot check: `:common:test build "-PmcVersion=26.2" --rerun-tasks` exit 0, 249 tests / 0 failures (XML); `ArmorStatusLayer.kt` read back (indexed loops, cached layout/text, one-shot failure flag, no `!!`/`runCatching` in neoforge sources). Writer smoke: 26.1.2 and 26.3 reached `SMOKE first draw` with armor equipped via test datapack, 0 ERROR/Exception lines; probe removed afterwards and final jars rebuilt but not re-run. Visual correctness NOT verified (manual checklist from the writer is the Phase 4 input).
+- T6 status: T5 already compiles on 26.1.2, 26.2, 26.3 (overlay `v26_1` for `Options.hideGui`, `v26_2` shared by 26.2/26.3). Remaining for T6: `runClient` on 26.2, binary-compat check across jars.
+- Open decision: `LinkageError` is treated as fatal in `isFatal()` (so a wrong-MC jar crashes instead of disabling the HUD). mods.toml version ranges already block wrong-version loads; keep as specified unless the user asks otherwise.
+- Line-length note: `ArmorStatusLayer.kt` has a line >120 chars; T7 ktlint will force a wrap.
+
 ## Next step
-T5: HUD renderer + `HudCanvas` adapter + layer registration (`RegisterGuiLayersEvent`), using `ActiveHudSettings` and `HudLayout`.
+T6 remainder: `runClient` on 26.2 + binary-compat check across jars, then T7 (Spotless/ktlint, metadata validation, wrapper checksum).

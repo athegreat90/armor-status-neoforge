@@ -2,6 +2,7 @@ package io.github.athegreat90.armorstatus
 
 import com.mojang.logging.LogUtils
 import io.github.athegreat90.armorstatus.config.ConfigRefresh
+import io.github.athegreat90.armorstatus.hud.HudRegistration
 import net.neoforged.api.distmarker.Dist
 import net.neoforged.bus.api.IEventBus
 import net.neoforged.fml.ModContainer
@@ -15,6 +16,7 @@ import net.neoforged.fml.common.Mod
 class ArmorStatusNeoForge(modBus: IEventBus, container: ModContainer) {
     init {
         ConfigRefresh.register(modBus, container)
+        HudRegistration.register(modBus)
         LogUtils.getLogger().info("Armor Status NeoForge loaded (Kotlin {})", KotlinVersion.CURRENT)
     }
 }

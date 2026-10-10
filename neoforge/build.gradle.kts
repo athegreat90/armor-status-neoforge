@@ -26,8 +26,16 @@ base.archivesName = "armor-status-neoforge"
 version = "$modVersion+mc$mcVersion"
 group = property("mod_group_id") as String
 
+// Only the F1 "hide GUI" check differs between targets: 26.1.x reads Options#hideGui, 26.2 and later read
+// Hud#isHidden. Everything else compiles unchanged on all three, so just two overlay source dirs exist and
+// 26.2 and 26.3 share src/v26_2 (a separate v26_3 would be added only if a real difference appears).
+val versionOverlay = if (mcVersion.startsWith("26.1")) "v26_1" else "v26_2"
+
 kotlin {
     jvmToolchain(25)
+    sourceSets.main {
+        kotlin.srcDir("src/$versionOverlay/kotlin")
+    }
 }
 
 repositories {
@@ -52,6 +60,11 @@ neoForge {
     runs {
         register("client") {
             client()
+            // Dev convenience only: -PquickPlay=<save folder under run/saves> joins that singleplayer world on launch.
+            providers.gradleProperty("quickPlay").orNull?.let { save ->
+                programArgument("--quickPlaySingleplayer")
+                programArgument(save)
+            }
         }
         // Used only to check that the client-only mod stays inert on a dedicated server.
         register("server") {
