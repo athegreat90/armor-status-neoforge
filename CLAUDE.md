@@ -72,8 +72,8 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 ## GitHub Actions and Modrinth
 
 - `.github/workflows/ci.yml` (running, green on `main`): matrix over the three versions; Spotless, `:common:test`, `check build`, upload jars; actions pinned by full SHA; `permissions: contents: read`.
-- `.github/workflows/release.yml` (on `main`, **never run**): tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; 26.3 as `beta` until NeoForge 26.3 has a stable build. `workflow_dispatch` is always a dry run. A real tag needs a `[0.1.0]` section in `CHANGELOG.md`.
-- Secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`. Neither exists yet; never store them in the repository.
+- `.github/workflows/release.yml` (on `main`; the `workflow_dispatch` dry run succeeded on 2026-10-11, no real tag has run): tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; 26.3 as `beta` until NeoForge 26.3 has a stable build. `workflow_dispatch` is always a dry run. A real tag needs a non-empty `## [<version>]` section in `CHANGELOG.md` (`[0.1.0]` exists).
+- Secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`. Both exist in the repository settings (the token is a secret, the project id a variable); never store their values in the repository or print them.
 
 ## Attribution and licensing
 

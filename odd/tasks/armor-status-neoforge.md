@@ -191,4 +191,4 @@ F3 position follow-up (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - Dev environment state (historical, before the merge): NeoForge dev server (26.2, PID 7224, `neoforge/run/server`) was running; the dev client was closed by the user. Both are stopped now. A throwaway Gradle init script in the scratchpad (not in the repo) provides the server run dir and auto-join. `eula=true` in `neoforge/run/eula.txt` was written earlier by a writer agent (disclosed to the user).
 
 ## Next step
-T11 STOP: wait for explicit approval before making the repo public, creating the Modrinth project and its secret and variable, adding the `[0.1.0]` changelog section, dry-running `release.yml`, creating tags or publishing. PR #1 is merged.
+T11 STOP: the Modrinth project and credentials exist, the `release.yml` dry run succeeded (2026-10-11) and the `[0.1.0]` changelog section is written. Still wait for explicit approval before making the repo or the Modrinth project public, creating the `v0.1.0` tag or publishing.

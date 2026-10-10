@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
-Nothing has been released yet. The list below describes what exists in the repository.
+## [0.1.0] - 2026-10-11
+
+First release. An unofficial, clean-room NeoForge reimplementation of the idea behind Armor Status by ShirjeelPlays.
 
 ### Added
 
@@ -24,5 +26,7 @@ Nothing has been released yet. The list below describes what exists in the repos
 
 ### Known issues
 
-- Visual output and the configuration screen have not been verified by hand yet.
-- Minecraft 26.3 builds against a NeoForge beta.
+- Checked in game on Minecraft 26.2 only (default layout and the F3 behaviour). 26.1.2 and 26.3 are built and tested automatically but have not been checked on screen yet.
+- The configuration screen has not been opened in a recorded test, and it shows enum values by their raw names (for example `MIDDLE_LEFT`).
+- Joining a vanilla server with the mod installed has not been tested.
+- Minecraft 26.3 builds against a NeoForge beta, so that file is published on the beta channel.
