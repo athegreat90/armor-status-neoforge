@@ -20,7 +20,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - [x] T5 HUD renderer + `HudCanvas` adapter + layer registration. Accept: manual checklist on 26.1.2.
 - [x] T6 Port to 26.2 and 26.3; binary-compat check. Accept: 3 builds + 3 smoke tests.
 - [x] T7 Spotless + ktlint, metadata validation task, jar naming.
-- [ ] T8 Docs: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, rules, MEMORY.md.
+- [x] T8 Docs: README, ATTRIBUTION, LICENSE, CHANGELOG, CONTRIBUTING, CLAUDE.md, rules, MEMORY.md.
 - [ ] T9 CI workflow; push to PRIVATE remote; confirm Actions green.
 - [ ] T10 Release workflow + Minotaur dry-run; licence/attribution review.
 - [ ] T11 STOP: ask explicit approval before going public or publishing.
@@ -42,6 +42,7 @@ Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), 
 - T5 decisions: layer registered `registerBelow(VanillaGuiLayers.CHAT, armorstatusneoforge:armor_status)` (above hotbar/bars/scoreboard, below chat/tab list/subtitles); no `v26_3` overlay needed (compiles unchanged); `HudCanvas` is a `@JvmInline value class` (no per-frame allocation); text width cached by string identity; render body `try/catch Throwable` with `isFatal()` rethrow and one-shot `failed` flag (note: `LinkageError` counts as fatal, so a binary mismatch on another MC version would crash instead of disabling the HUD).
 - T6 remainder + T7 writer (2026-10-10): `runClient` smoke on 26.2 done (see evidence). Added Spotless 8.10.4 + ktlint 1.8.0 in the root `build.gradle.kts` (Kotlin + Kotlin DSL only, `mavenCentral()` for the ktlint artifacts, root `check` depends on `spotlessCheck`), `verifyModMetadata` in `neoforge/build.gradle.kts` (hooked to `check`, depends on `jar`), and `distributionSha256Sum` for Gradle 9.2.1 bin. `spotlessApply` reformatted 23 Kotlin source files (formatting only, +305/-84) plus the three build scripts; hand-wrapped the 130-col `Unsupported mcVersion` message in `neoforge/build.gradle.kts`. `buildAll` already fails correctly (no change needed). T6/T7 checkboxes left unchecked for the parent.
 - T7 decisions: Spotless is applied at the ROOT project only (one `spotlessCheck` for both modules); `ktlint_official` wraps any function signature with 2+ parameters and long calls, hence the formatting churn; `ArmorStatusLayer.kt` hot path now has a multi-line `if (!textCaches[i].update(...)) { continue }` (ktlint's shape, same semantics). Detekt not added. ktlint 1.8.0 embeds `kotlin-compiler-embeddable` 2.2.21 and parsed every current source without errors; a future 2.3/2.4-only syntax could fail to parse, mitigation would be bumping ktlint when it ships a newer embedded compiler (do not suppress).
+- T8 writer (2026-10-10): created `LICENSE` (MIT), `README.md`, `ATTRIBUTION.md`, `CHANGELOG.md`, `CONTRIBUTING.md`, `CLAUDE.md` (imports `@MEMORY.md`), `.claude/rules/{kotlin,testing}.md`, `MEMORY.md` (11 required sections). Versions cross-checked against build files; Modrinth slugs `armor-status` and `kotlin-lang-forge` resolve (KLF listed as GPL-3.0-only). Documentation only: no source or build files touched, no RED/GREEN applicable. T8 checkbox left unchecked for the parent.
 
 ## Route declaration
 | Task | Route | Trigger evidence |
@@ -87,6 +88,9 @@ T3 (observed 2026-10-10, native Windows 11, JDK 25.0.2):
 - Not verified: `build "-PmcVersion=26.2"` (not requested for T3); no runtime check (pure unit tests only).
 
 - T3 closed: commit `43a3ef9` (`feat(common): add pure armor status domain with tests`). Parent spot check: `:common:test --rerun-tasks` exit 0, 223 tests / 0 failures (read from XML); no `!!` in main sources; `Recovery.kt` read back. Writer reported RED as compile-only for display/layout/config/visibility/error groups (assertion-level RED only for model).
+- Convention note: writer entries saying "checkbox left unchecked" mean the writer did not tick it; the parent ticks a task only after its own spot check and the work-unit commit (this resolves review finding R2-001 on contradictory status wording).
+- Review T6+T7 (slice base `a0599fc`, 27 files, 577 lines): assessed high (`process_boundary` in `build.gradle.kts`), consent granted, 4-lens review approved (only finding R2-001, the doc wording above), acknowledged and burned (lineage `review-f34eb65d803845c1`). Reviewed boundary advances to `7a74208`.
+- T8 parent check: all 11 MEMORY.md sections present in order; `@MEMORY.md` import present in CLAUDE.md; no secrets/TODO markers; overclaim scan (published/CI/visual) clean. Writer flagged that the Modrinth `armor-status` page is under user MineBoost while its source URL points to the ShirjeelPlays repo (docs word it neutrally).
 - Review T2+T3 (slice base `59cbe40`, 26 files, 1075 lines): assessed medium (`slice_budget_reached`), consent granted, 1-lens (reliability) review approved, acknowledged and burned (lineage `review-2d8f48f5814b61ea`). Reviewed boundary advances to `43a3ef9`. Only advisory finding (doc checkbox wording) already resolved by this entry.
 - Branching: T1–T3 landed on local `main` before the feature branch rule was applied; from T4 on, work happens on `feat/armor-status-hud`. Nothing is pushed yet.
 - Running authored-lines count (additions+deletions, generated excluded): ~1.8k over T1–T3 (650 + 97 + 1075 approx.). Delivery strategy still `ask-on-risk` (chain choice pending).
