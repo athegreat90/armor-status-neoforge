@@ -112,14 +112,20 @@ Same setup on each version: a NeoForge dev server in its own folder (`runServer 
 - 26.1.2 (NeoForge 26.1.2.115), `neoforge/run/screenshots/2026-10-11_00.38.00.png` and `00.38.17.png`: four rows at `MIDDLE_LEFT`, each with an icon and a shadowed number (407, 592, 555, 481, which look like full-durability values), nothing overlapping the vanilla HUD. With F3 open the debug text is readable and the compact stack sits in the bottom-right corner, number left of the icon. Client log: mod loaded, no warnings, no `ERROR`/`Exception`.
 - 26.3 (NeoForge 26.3.0.64-beta, FML 12.0.9), `2026-10-11_00.43.12.png` and `00.43.14.png`: the same HUD and the same F3 result. Client log: mod loaded, no `logoFile` warning, no `ERROR`/`Exception`.
 
-**Not verified:** damaged and near-broken armor, empty slots, GUI scales 1 to 4, spectator, F1, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen, on any version (no recorded check); the mod-list icon and the config screen (not visible in the screenshots); joining a vanilla (non-NeoForge) server with the mod installed.
+### Vanilla server join (2026-10-11, Minecraft 26.2)
+
+Server: the official vanilla 26.2 `server.jar` from Mojang's version manifest (SHA-1 `823e2250d24b3ddac457a60c92a6a941943fcd6a`, checked against the manifest), started with `java -Xmx2G -jar server.jar nogui` on Java 25 in a scratch folder outside the repo, `online-mode=false`. Client: `runClient "-PmcVersion=26.2" "-PquickJoin=localhost:25565"`, the same dev client with the mod loaded.
+
+Result from the logs: the server printed `Dev logged in` and `Dev joined the game` and never mentions NeoForge or Forge; the client log shows the mod loaded, `Connecting to localhost, 25565`, no `ERROR`/`Exception`, and one expected warning (`Ignoring chat session from Dev due to missing Services public key`, a consequence of offline mode). So the client-only declaration (`dist = CLIENT`, `side = "CLIENT"`) does not stop a NeoForge client from joining a vanilla server. The HUD was not checked on screen during this join (no screenshot), and only 26.2 was tried; vanilla 26.1.2 and 26.3 servers were not.
+
+**Not verified:** damaged and near-broken armor, empty slots, GUI scales 1 to 4, spectator, F1, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen, on any version (no recorded check); the mod-list icon and the config screen (not visible in the screenshots); the HUD on screen while connected to a vanilla server; joining vanilla 26.1.2 and 26.3 servers.
 
 ## Known issues
 
 - The default layout and the F3 compact layout were checked on screen on 26.1.2, 26.2 and 26.3. The rest of the manual checklist is pending, see "Manual verification".
 - 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
 - Config screen shows raw enum names.
-- Joining a vanilla server is untested; client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
+- Joining a vanilla 26.2 server works (logs only); vanilla 26.1.2 and 26.3 servers are untested, and the HUD was not checked on screen on a vanilla server. Client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
 - No offhand handling and no special elytra handling, as upstream.
 - Original mod icon added (`artwork/icon.svg`, `neoforge/src/main/resources/icon.png`); in-game mod-list appearance has not been verified.
 - ktlint 1.8.0 embeds Kotlin 2.2.21; a future 2.3/2.4-only syntax could fail to parse. Bump ktlint when a newer one ships; do not suppress.
@@ -163,6 +169,6 @@ Same setup on each version: a NeoForge dev server in its own folder (`runServer 
 1. T11: done so far with approval: Modrinth project and credentials, release dry run, `[0.1.0]` changelog section. Still waiting for explicit approval: making the repository public, making the Modrinth project public, and tagging `v0.1.0`.
 2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `iconFile`/`iconBlur` on 26.2 and 26.3 and `logoFile`/`logoBlur` on 26.1.2 (see "Version specifics learned").
 3. Finish the manual visual checklist: the default layout and F3 are done on all three versions. Still open on every version: partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
-4. Join a vanilla server with the mod installed.
+4. Optional: look at the HUD on screen while connected to a vanilla server, and join vanilla 26.1.2 and 26.3 servers (a vanilla 26.2 join is done, see "Vanilla server join").
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
 6. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).

@@ -28,5 +28,5 @@ First release. An unofficial, clean-room NeoForge reimplementation of the idea b
 
 - Checked in game on Minecraft 26.1.2, 26.2 and 26.3, but only the default layout and the F3 compact layout. Damaged armor, GUI scales, the other anchors, `HIDE`/`KEEP` and spectator mode have not been checked on screen.
 - The configuration screen has not been opened in a recorded test, and it shows enum values by their raw names (for example `MIDDLE_LEFT`).
-- Joining a vanilla server with the mod installed has not been tested.
+- Joining a vanilla Minecraft 26.2 server with the mod installed works (checked in the logs). Vanilla 26.1.2 and 26.3 servers have not been tried, and the HUD was not checked on screen on a vanilla server.
 - Minecraft 26.3 builds against a NeoForge beta, so that file is published on the beta channel.

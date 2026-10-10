@@ -112,7 +112,7 @@ NeoForge-bound code has no unit tests. It is verified by compilation on all thre
 - In-game checks so far cover only the default look and the F3 compact layout, on Minecraft 26.1.2, 26.2 and 26.3. Damaged armor, GUI scales, the other anchors, the `HIDE` and `KEEP` F3 modes and spectator mode have not been checked on screen.
 - Minecraft 26.3 builds against a NeoForge beta; there is no stable NeoForge 26.3 build.
 - The config screen shows enum values by their raw names (for example `MIDDLE_LEFT`), not translated labels.
-- Joining a vanilla server with the mod installed has not been tested (only a NeoForge dev server was used).
+- Joining a vanilla Minecraft 26.2 server with the mod installed works (checked in the logs). Vanilla 26.1.2 and 26.3 servers have not been tried, and the HUD was not checked on screen on a vanilla server.
 - Like the original mod, there is no offhand handling and no special handling for elytra beyond the chest slot.
 - The config screen has not been opened in a recorded test.
 - No release has been published.
