@@ -24,8 +24,8 @@ private const val DEFAULT_DEBUG_SCALE: Float = 0.6f
  * with [sanitized].
  *
  * Defaults reproduce the upstream mod's look: enabled, middle left, scale 1.0, every slot shown,
- * raw durability numbers in white. [debugScreenMode] and [debugScreenScale] keep the HUD out of the way of the
- * F3 debug text; see [effectiveScale].
+ * raw durability numbers in white. [debugScreenMode], [debugScreenScale] and [debugScreenAnchor] keep the HUD out of
+ * the way of the F3 debug text; see [effectiveScale] and [effectiveAnchor].
  */
 data class HudSettings(
     val enabled: Boolean = true,
@@ -39,6 +39,7 @@ data class HudSettings(
     val gradientColors: Boolean = false,
     val debugScreenMode: DebugScreenMode = DebugScreenMode.COMPACT,
     val debugScreenScale: Float = DEFAULT_DEBUG_SCALE,
+    val debugScreenAnchor: HudAnchor = HudAnchor.BOTTOM_RIGHT,
 ) {
     init {
         require(scale in MIN_SCALE..MAX_SCALE) { "scale must be in $MIN_SCALE..$MAX_SCALE, was $scale" }
@@ -68,6 +69,7 @@ data class HudSettings(
             gradientColors: Boolean,
             debugScreenModeName: String? = null,
             debugScreenScale: Double = Default.debugScreenScale.toDouble(),
+            debugScreenAnchorName: String? = null,
         ): HudSettings =
             HudSettings(
                 enabled = enabled,
@@ -87,6 +89,7 @@ data class HudSettings(
                         MIN_DEBUG_SCALE,
                         MAX_DEBUG_SCALE,
                     ),
+                debugScreenAnchor = parseEnum(debugScreenAnchorName, Default.debugScreenAnchor),
             )
 
         private fun coerceScale(
@@ -109,10 +112,19 @@ data class HudSettings(
 /**
  * The scale to draw the HUD at this frame: [HudSettings.scale], times [HudSettings.debugScreenScale] while the F3
  * screen is open in [DebugScreenMode.COMPACT]. Scaling the whole HUD also shrinks the gaps between its rows, and
- * the anchor stays put. Returns a primitive, so it is safe on the per-frame path.
+ * the anchor is chosen separately by [effectiveAnchor]. Returns a primitive, so it is safe on the per-frame path.
  */
 fun HudSettings.effectiveScale(debugScreenOpen: Boolean): Float =
     if (debugScreenOpen && debugScreenMode == DebugScreenMode.COMPACT) scale * debugScreenScale else scale
+
+/**
+ * The anchor to draw the HUD at this frame: [HudSettings.debugScreenAnchor] while the F3 screen is open in
+ * [DebugScreenMode.COMPACT] (so the compact rows can sit in a free corner instead of under the debug text), otherwise
+ * [HudSettings.anchor]. [DebugScreenMode.HIDE] and [DebugScreenMode.KEEP] never move the HUD. Returns an enum
+ * constant, so it is safe on the per-frame path.
+ */
+fun HudSettings.effectiveAnchor(debugScreenOpen: Boolean): HudAnchor =
+    if (debugScreenOpen && debugScreenMode == DebugScreenMode.COMPACT) debugScreenAnchor else anchor
 
 /** Whether the user wants [slot] shown. */
 fun HudSettings.shows(slot: ArmorSlot): Boolean =

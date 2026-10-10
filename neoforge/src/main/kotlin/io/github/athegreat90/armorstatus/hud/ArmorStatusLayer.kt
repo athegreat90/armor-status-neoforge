@@ -2,6 +2,7 @@ package io.github.athegreat90.armorstatus.hud
 
 import com.mojang.logging.LogUtils
 import io.github.athegreat90.armorstatus.config.ActiveHudSettings
+import io.github.athegreat90.armorstatus.config.effectiveAnchor
 import io.github.athegreat90.armorstatus.config.effectiveScale
 import io.github.athegreat90.armorstatus.config.shows
 import io.github.athegreat90.armorstatus.display.DurabilityTextCache
@@ -104,8 +105,10 @@ internal class ArmorStatusLayer : GuiLayer {
         }
         if (rows == 0) return
 
-        // Smaller while F3 is open in COMPACT mode; the cache key and the pose scale must use the same value.
+        // Smaller and re-anchored while F3 is open in COMPACT mode; the cache key and the pose scale must use the
+        // same scale value.
         val scale = settings.effectiveScale(debugOpen)
+        val anchor = settings.effectiveAnchor(debugOpen)
         val canvas = HudCanvas(graphics)
         val layout =
             layoutCache.layout(
@@ -113,7 +116,7 @@ internal class ArmorStatusLayer : GuiLayer {
                 canvas.guiHeight,
                 scale,
                 HudCanvas.fontHeight,
-                settings.anchor,
+                anchor,
                 rows,
             )
         canvas.pushScale(scale)

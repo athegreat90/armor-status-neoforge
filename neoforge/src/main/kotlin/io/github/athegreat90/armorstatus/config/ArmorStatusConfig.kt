@@ -56,6 +56,14 @@ internal object ArmorStatusConfig {
                 "Extra size factor applied to the HUD while the F3 debug screen is open in COMPACT mode.",
             ).defineInRange("debugScreenScale", 0.6, MIN_DEBUG_SCALE.toDouble(), MAX_DEBUG_SCALE.toDouble())
 
+    private val debugScreenAnchor =
+        builder
+            .entry(
+                "debugScreenAnchor",
+                "Where the HUD is pinned while the F3 debug screen is open in COMPACT mode. " +
+                    "BOTTOM_RIGHT leaves the debug text uncovered.",
+            ).defineEnum("debugScreenAnchor", HudAnchor.BOTTOM_RIGHT)
+
     val spec: ModConfigSpec = builder.build()
 
     /**
@@ -75,6 +83,7 @@ internal object ArmorStatusConfig {
             gradientColors = gradientColors.get(),
             debugScreenModeName = debugScreenMode.get().name,
             debugScreenScale = debugScreenScale.get(),
+            debugScreenAnchorName = debugScreenAnchor.get().name,
         )
 
     private fun ModConfigSpec.Builder.entry(

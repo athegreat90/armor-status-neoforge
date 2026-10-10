@@ -16,7 +16,7 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 - Scale from 0.5 to 2.0, applied on top of Minecraft's GUI scale.
 - Toggles per armor slot, plus a global enable toggle.
 - Hidden while spectating, while the HUD is hidden with F1, and when there is no player.
-- While the F3 debug screen is open the HUD stays visible but compact (scaled down, so the rows sit closer together and cover less of the debug text). Choose `COMPACT`, `HIDE` or `KEEP` with `debugScreenMode`.
+- While the F3 debug screen is open the HUD stays visible but compact (scaled down, so the rows sit closer together and cover less of the debug text). Choose `COMPACT`, `HIDE` or `KEEP` with `debugScreenMode`. In `COMPACT` mode the HUD also moves to its own anchor (`debugScreenAnchor`, bottom right by default) so it does not sit under the F3 text.
 - Client-only: the server does not need the mod.
 
 ## Supported Minecraft versions
@@ -53,6 +53,7 @@ Edit `config/armorstatusneoforge-client.toml`, or open **Mods > Armor Status Neo
 | `gradientColors` | `false` | `true`, `false` |
 | `debugScreenMode` | `COMPACT` | `COMPACT` (smaller while F3 is open), `HIDE` (not drawn while F3 is open), `KEEP` (unchanged) |
 | `debugScreenScale` | `0.6` | `0.25` to `1.0`; extra factor applied on top of `scale` while F3 is open in `COMPACT` mode |
+| `debugScreenAnchor` | `BOTTOM_RIGHT` | Same values as `position`; where the HUD is pinned while F3 is open in `COMPACT` mode. Ignored in `HIDE` and `KEEP`, and when F3 is closed `position` applies |
 
 NeoForge corrects invalid values in the file: numbers are clamped to the nearest bound, and invalid enum or boolean values are reset to their defaults.
 

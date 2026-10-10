@@ -20,6 +20,7 @@ class HudSettingsTest {
         displayModeName: String? = "RAW",
         debugScreenModeName: String? = "COMPACT",
         debugScreenScale: Double = 0.6,
+        debugScreenAnchorName: String? = "BOTTOM_RIGHT",
     ) = HudSettings.sanitized(
         enabled = true,
         anchorName = anchorName,
@@ -32,6 +33,7 @@ class HudSettingsTest {
         gradientColors = false,
         debugScreenModeName = debugScreenModeName,
         debugScreenScale = debugScreenScale,
+        debugScreenAnchorName = debugScreenAnchorName,
     )
 
     @Test
@@ -44,6 +46,7 @@ class HudSettingsTest {
         assertFalse(defaults.gradientColors)
         assertEquals(DebugScreenMode.COMPACT, defaults.debugScreenMode)
         assertEquals(0.6f, defaults.debugScreenScale)
+        assertEquals(HudAnchor.BOTTOM_RIGHT, defaults.debugScreenAnchor)
         ArmorSlot.entries.forEach { assertTrue(defaults.shows(it), "$it") }
     }
 
@@ -145,6 +148,7 @@ class HudSettingsTest {
                 gradientColors = true,
                 debugScreenModeName = "KEEP",
                 debugScreenScale = 0.4,
+                debugScreenAnchorName = "TOP_LEFT",
             )
         assertEquals(
             HudSettings(
@@ -159,6 +163,7 @@ class HudSettingsTest {
                 gradientColors = true,
                 debugScreenMode = DebugScreenMode.KEEP,
                 debugScreenScale = 0.4f,
+                debugScreenAnchor = HudAnchor.TOP_LEFT,
             ),
             result,
         )
@@ -227,6 +232,78 @@ class HudSettingsTest {
     fun `the effective scale stays positive at the smallest scale and debug scale`() {
         val settings = HudSettings.Default.copy(scale = MIN_SCALE, debugScreenScale = MIN_DEBUG_SCALE)
         assertEquals(0.125f, settings.effectiveScale(debugScreenOpen = true))
+    }
+
+    @ParameterizedTest(name = "debug anchor \"{0}\" -> {1}")
+    @CsvSource(
+        "top_left, TOP_LEFT",
+        "BOTTOM_RIGHT, BOTTOM_RIGHT",
+        "' Middle_Right ', MIDDLE_RIGHT",
+        "bottom_left, BOTTOM_LEFT",
+    )
+    fun `sanitized parses debug screen anchor names case-insensitively`(
+        name: String,
+        expected: HudAnchor,
+    ) {
+        assertEquals(expected, sanitized(debugScreenAnchorName = name).debugScreenAnchor)
+    }
+
+    @ParameterizedTest(name = "unknown debug anchor \"{0}\" -> BOTTOM_RIGHT")
+    @ValueSource(strings = ["", "  ", "centre", "TOP", "true"])
+    fun `sanitized falls back to bottom right for unknown debug screen anchors`(name: String) {
+        assertEquals(HudAnchor.BOTTOM_RIGHT, sanitized(debugScreenAnchorName = name).debugScreenAnchor)
+    }
+
+    @Test
+    fun `sanitized falls back to bottom right for a null debug screen anchor`() {
+        assertEquals(HudAnchor.BOTTOM_RIGHT, sanitized(debugScreenAnchorName = null).debugScreenAnchor)
+    }
+
+    @Test
+    fun `sanitized keeps the debug screen anchor independent of the normal anchor`() {
+        val result = sanitized(anchorName = "TOP_LEFT", debugScreenAnchorName = "MIDDLE_RIGHT")
+        assertEquals(HudAnchor.TOP_LEFT, result.anchor)
+        assertEquals(HudAnchor.MIDDLE_RIGHT, result.debugScreenAnchor)
+    }
+
+    @ParameterizedTest(name = "mode {0}, f3 closed -> the normal anchor")
+    @EnumSource(DebugScreenMode::class)
+    fun `the effective anchor ignores the debug anchor while f3 is closed`(mode: DebugScreenMode) {
+        val settings =
+            HudSettings.Default.copy(
+                anchor = HudAnchor.TOP_LEFT,
+                debugScreenMode = mode,
+                debugScreenAnchor = HudAnchor.BOTTOM_RIGHT,
+            )
+        assertEquals(HudAnchor.TOP_LEFT, settings.effectiveAnchor(debugScreenOpen = false))
+    }
+
+    @ParameterizedTest(name = "mode {0}, f3 open -> {1}")
+    @CsvSource("COMPACT, BOTTOM_RIGHT", "HIDE, TOP_LEFT", "KEEP, TOP_LEFT")
+    fun `only compact uses the debug anchor while f3 is open`(
+        mode: DebugScreenMode,
+        expected: HudAnchor,
+    ) {
+        val settings =
+            HudSettings.Default.copy(
+                anchor = HudAnchor.TOP_LEFT,
+                debugScreenMode = mode,
+                debugScreenAnchor = HudAnchor.BOTTOM_RIGHT,
+            )
+        assertEquals(expected, settings.effectiveAnchor(debugScreenOpen = true))
+    }
+
+    @Test
+    fun `the default settings move to the bottom right while f3 is open and stay middle left otherwise`() {
+        assertEquals(HudAnchor.BOTTOM_RIGHT, HudSettings.Default.effectiveAnchor(debugScreenOpen = true))
+        assertEquals(HudAnchor.MIDDLE_LEFT, HudSettings.Default.effectiveAnchor(debugScreenOpen = false))
+    }
+
+    @ParameterizedTest(name = "debug anchor {0} is used as is in compact mode")
+    @EnumSource(HudAnchor::class)
+    fun `every anchor can be the debug anchor`(anchor: HudAnchor) {
+        val settings = HudSettings.Default.copy(debugScreenAnchor = anchor)
+        assertEquals(anchor, settings.effectiveAnchor(debugScreenOpen = true))
     }
 
     @Test

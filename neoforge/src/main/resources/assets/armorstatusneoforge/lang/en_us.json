@@ -12,5 +12,6 @@
   "armorstatusneoforge.configuration.displayMode": "Durability Display",
   "armorstatusneoforge.configuration.gradientColors": "Gradient Colors",
   "armorstatusneoforge.configuration.debugScreenMode": "Debug Screen (F3) Behaviour",
-  "armorstatusneoforge.configuration.debugScreenScale": "Compact Scale in Debug Screen (F3)"
+  "armorstatusneoforge.configuration.debugScreenScale": "Compact Scale in Debug Screen (F3)",
+  "armorstatusneoforge.configuration.debugScreenAnchor": "Position in Debug Screen (F3)"
 }
