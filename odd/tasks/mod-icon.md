@@ -28,17 +28,17 @@ Give Armor Status NeoForge an original, recognizable icon for the mod list and p
   - Structural rerun: `python "C:\Users\alexa\AppData\Local\Temp\opencode\icon01-verify.py" "C:\Users\alexa\Documents\GitRepo\armor-status-neoforge"` (external check-only temporary script, not a permanent repository test).
   - PNG SHA-256: `367fb2c6fb5896e538254a14a3a3f65277fe925df5246fb798ac355c5b7c40ff`.
   - Limitations: in-game mod-list appearance unverified; only target 26.2 was rebuilt for this shared asset.
-  - Commit: pending identity for `feat(mod): add original armor status icon`.
-  - RDD mode: on, global source; staged candidate assessed medium (`executable_change`, SVG), 136 authored lines, `review_due=false`, `under_budget`. Committed-range assessment pending; no candidate consent requested yet.
+  - Commit: `8eb1856eafb899552e0f4f5e21a36e5ae1a87360` — `feat(mod): add original armor status icon`.
+  - RDD mode: on, global source; exact committed range assessed medium (`executable_change`, SVG), 136 authored lines, `review_due=false`, `under_budget`. Native review remains deferred in the slice; no approval or receipt is claimed.
 
 ## Delivery
 
 - Strategy: ask-on-risk; forecast about 140 authored lines, generated PNG excluded.
 - One coherent work-unit commit on `feat/mod-icon`; no remote operations.
 - Base boundary: `66d2d3849d2c9b07b3b91da1d323f397280677c2`.
-- Running authored lines: pending.
-- Engram mirror: pending.
+- Running authored lines: 136 for the implementation commit; closure bookkeeping remains below the delivery budget.
+- Engram mirror locator: `odd/mod-icon/tasks`; full document synchronization and readback occur at closure.
 
 ## Progress and next step
 
-Artwork, metadata integration, and icon-related documentation are implemented and checked. The intended files are staged; native assessment classified this candidate medium and under budget. Commit the verified work unit, then assess that exact committed range and record its identity and outcome. In-game appearance remains a manual follow-up.
+ICON-01 is complete and committed. Packaging and asset checks passed. Native assessment deferred review because the medium-risk committed slice is under budget. No push or publication occurred. The next user-visible step is to use the PNG for the listing or manually inspect its in-game mod-list appearance.
