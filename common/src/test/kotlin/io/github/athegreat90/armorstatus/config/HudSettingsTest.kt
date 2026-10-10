@@ -18,6 +18,7 @@ class HudSettingsTest {
         anchorName: String? = "MIDDLE_LEFT",
         scale: Double = 1.0,
         displayModeName: String? = "RAW",
+        hideWhenDebugScreen: Boolean = true,
     ) = HudSettings.sanitized(
         enabled = true,
         anchorName = anchorName,
@@ -28,6 +29,7 @@ class HudSettingsTest {
         showFeet = true,
         displayModeName = displayModeName,
         gradientColors = false,
+        hideWhenDebugScreen = hideWhenDebugScreen,
     )
 
     @Test
@@ -38,6 +40,7 @@ class HudSettingsTest {
         assertEquals(1.0f, defaults.scale)
         assertEquals(DurabilityDisplayMode.RAW, defaults.displayMode)
         assertFalse(defaults.gradientColors)
+        assertTrue(defaults.hideWhenDebugScreen)
         ArmorSlot.entries.forEach { assertTrue(defaults.shows(it), "$it") }
     }
 
@@ -131,6 +134,7 @@ class HudSettingsTest {
                 showFeet = true,
                 displayModeName = "PERCENT",
                 gradientColors = true,
+                hideWhenDebugScreen = false,
             )
         assertEquals(
             HudSettings(
@@ -143,9 +147,16 @@ class HudSettingsTest {
                 showFeet = true,
                 displayMode = DurabilityDisplayMode.PERCENT,
                 gradientColors = true,
+                hideWhenDebugScreen = false,
             ),
             result,
         )
+    }
+
+    @Test
+    fun `sanitized hides the hud in the debug screen unless told otherwise`() {
+        assertTrue(sanitized().hideWhenDebugScreen)
+        assertFalse(sanitized(hideWhenDebugScreen = false).hideWhenDebugScreen)
     }
 
     @Test

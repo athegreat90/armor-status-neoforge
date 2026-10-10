@@ -10,5 +10,6 @@
   "armorstatusneoforge.configuration.showLeggings": "Show Leggings",
   "armorstatusneoforge.configuration.showBoots": "Show Boots",
   "armorstatusneoforge.configuration.displayMode": "Durability Display",
-  "armorstatusneoforge.configuration.gradientColors": "Gradient Colors"
+  "armorstatusneoforge.configuration.gradientColors": "Gradient Colors",
+  "armorstatusneoforge.configuration.hideWhenDebugScreen": "Hide in Debug Screen (F3)"
 }

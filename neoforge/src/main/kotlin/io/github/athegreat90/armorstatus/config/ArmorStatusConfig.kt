@@ -41,6 +41,11 @@ internal object ArmorStatusConfig {
             .entry("gradientColors", "Color the durability text from green (full) to red (almost broken).")
             .define("gradientColors", false)
 
+    private val hideWhenDebugScreen =
+        builder
+            .entry("hideWhenDebugScreen", "Hide the HUD while the F3 debug screen is shown, so it does not cover it.")
+            .define("hideWhenDebugScreen", true)
+
     val spec: ModConfigSpec = builder.build()
 
     /**
@@ -58,6 +63,7 @@ internal object ArmorStatusConfig {
             showFeet = showBoots.get(),
             displayModeName = displayMode.get().name,
             gradientColors = gradientColors.get(),
+            hideWhenDebugScreen = hideWhenDebugScreen.get(),
         )
 
     private fun ModConfigSpec.Builder.entry(

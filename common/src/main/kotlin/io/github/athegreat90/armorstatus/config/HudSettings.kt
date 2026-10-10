@@ -15,7 +15,7 @@ const val MAX_SCALE: Float = 2.0f
  * Build one from untrusted input (a config file) with [sanitized].
  *
  * Defaults reproduce the upstream mod's look: enabled, middle left, scale 1.0, every slot shown,
- * raw durability numbers in white.
+ * raw durability numbers in white. [hideWhenDebugScreen] keeps the HUD out of the way of the F3 debug text.
  */
 data class HudSettings(
     val enabled: Boolean = true,
@@ -27,6 +27,7 @@ data class HudSettings(
     val showFeet: Boolean = true,
     val displayMode: DurabilityDisplayMode = DurabilityDisplayMode.DEFAULT,
     val gradientColors: Boolean = false,
+    val hideWhenDebugScreen: Boolean = true,
 ) {
     init {
         require(scale in MIN_SCALE..MAX_SCALE) { "scale must be in $MIN_SCALE..$MAX_SCALE, was $scale" }
@@ -50,6 +51,7 @@ data class HudSettings(
             showFeet: Boolean,
             displayModeName: String?,
             gradientColors: Boolean,
+            hideWhenDebugScreen: Boolean = Default.hideWhenDebugScreen,
         ): HudSettings =
             HudSettings(
                 enabled = enabled,
@@ -70,6 +72,7 @@ data class HudSettings(
                 showFeet = showFeet,
                 displayMode = parseEnum(displayModeName, Default.displayMode),
                 gradientColors = gradientColors,
+                hideWhenDebugScreen = hideWhenDebugScreen,
             )
 
         private inline fun <reified E : Enum<E>> parseEnum(

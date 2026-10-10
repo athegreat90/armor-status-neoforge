@@ -16,6 +16,7 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 - Scale from 0.5 to 2.0, applied on top of Minecraft's GUI scale.
 - Toggles per armor slot, plus a global enable toggle.
 - Hidden while spectating, while the HUD is hidden with F1, and when there is no player.
+- Hidden while the F3 debug screen is shown, so it does not cover the debug text. Turn this off with `hideWhenDebugScreen`.
 - Client-only: the server does not need the mod.
 
 ## Supported Minecraft versions
@@ -50,6 +51,7 @@ Edit `config/armorstatusneoforge-client.toml`, or open **Mods > Armor Status Neo
 | `showBoots` | `true` | `true`, `false` |
 | `displayMode` | `RAW` | `RAW` (remaining durability points), `PERCENT` |
 | `gradientColors` | `false` | `true`, `false` |
+| `hideWhenDebugScreen` | `true` | `true` (hide the HUD while the F3 debug screen is shown), `false` |
 
 NeoForge corrects invalid values in the file: numbers are clamped to the nearest bound, and invalid enum or boolean values are reset to their defaults.
 
@@ -99,7 +101,7 @@ The HUD runs every frame, so the render path uses indexed loops over fixed array
 
 ### Tests
 
-`common` has JUnit 5 and kotlin-test unit tests (249 at the time of writing) covering durability reading, text and colour, layout for every anchor, settings validation, the visibility rule, caches, and error recovery.
+`common` has JUnit 5 and kotlin-test unit tests covering durability reading, text and colour, layout for every anchor, settings validation, the visibility rule, caches, and error recovery.
 
 NeoForge-bound code has no unit tests. It is verified by compilation on all three targets, by the metadata check on the built jar, and by dev-client runs. Unit tests are not evidence of in-game behaviour.
 

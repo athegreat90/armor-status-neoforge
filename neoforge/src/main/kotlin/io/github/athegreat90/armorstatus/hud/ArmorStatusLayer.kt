@@ -78,6 +78,7 @@ internal class ArmorStatusLayer : GuiLayer {
                 hasPlayer = player != null,
                 isSpectator = player != null && player.isSpectator,
                 hudHidden = minecraft.isHudHidden(),
+                debugScreenOpen = minecraft.isDebugScreenOpen(),
             )
         if (player == null || !visible) return
 
