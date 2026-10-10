@@ -109,7 +109,7 @@ NeoForge-bound code has no unit tests. It is verified by compilation on all thre
 
 ## Known limitations
 
-- In-game checks so far cover Minecraft 26.2 only (default look and the F3 compact layout). Minecraft 26.1.2 and 26.3 are built and smoke-tested from the log, but not yet checked on screen.
+- In-game checks so far cover only the default look and the F3 compact layout, on Minecraft 26.1.2, 26.2 and 26.3. Damaged armor, GUI scales, the other anchors, the `HIDE` and `KEEP` F3 modes and spectator mode have not been checked on screen.
 - Minecraft 26.3 builds against a NeoForge beta; there is no stable NeoForge 26.3 build.
 - The config screen shows enum values by their raw names (for example `MIDDLE_LEFT`), not translated labels.
 - Joining a vanilla server with the mod installed has not been tested (only a NeoForge dev server was used).

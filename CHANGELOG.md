@@ -26,7 +26,7 @@ First release. An unofficial, clean-room NeoForge reimplementation of the idea b
 
 ### Known issues
 
-- Checked in game on Minecraft 26.2 only (default layout and the F3 behaviour). 26.1.2 and 26.3 are built and tested automatically but have not been checked on screen yet.
+- Checked in game on Minecraft 26.1.2, 26.2 and 26.3, but only the default layout and the F3 compact layout. Damaged armor, GUI scales, the other anchors, `HIDE`/`KEEP` and spectator mode have not been checked on screen.
 - The configuration screen has not been opened in a recorded test, and it shows enum values by their raw names (for example `MIDDLE_LEFT`).
 - Joining a vanilla server with the mod installed has not been tested.
 - Minecraft 26.3 builds against a NeoForge beta, so that file is published on the beta channel.
