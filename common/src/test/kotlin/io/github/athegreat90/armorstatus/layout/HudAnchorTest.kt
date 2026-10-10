@@ -15,7 +15,11 @@ class HudAnchorTest {
         "MIDDLE_RIGHT, false, MIDDLE",
         "BOTTOM_RIGHT, false, BOTTOM",
     )
-    fun `anchor exposes its horizontal and vertical side`(anchor: HudAnchor, isLeft: Boolean, vertical: VerticalAlign) {
+    fun `anchor exposes its horizontal and vertical side`(
+        anchor: HudAnchor,
+        isLeft: Boolean,
+        vertical: VerticalAlign,
+    ) {
         assertEquals(isLeft, anchor.isLeft)
         assertEquals(vertical, anchor.vertical)
     }

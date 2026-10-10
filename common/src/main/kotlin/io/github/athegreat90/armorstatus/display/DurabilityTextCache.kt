@@ -31,17 +31,28 @@ class DurabilityTextCache {
      * Refreshes [text] and [color] for the given raw values and returns whether the item can be damaged.
      * A `false` result means the row must be skipped.
      */
-    fun update(maxDamage: Int, damage: Int, mode: DurabilityDisplayMode, gradient: Boolean): Boolean {
-        val unchanged = primed &&
-            maxDamage == this.maxDamage &&
-            damage == this.damage &&
-            mode == this.mode &&
-            gradient == this.gradient
+    fun update(
+        maxDamage: Int,
+        damage: Int,
+        mode: DurabilityDisplayMode,
+        gradient: Boolean,
+    ): Boolean {
+        val unchanged =
+            primed &&
+                maxDamage == this.maxDamage &&
+                damage == this.damage &&
+                mode == this.mode &&
+                gradient == this.gradient
         if (!unchanged) rebuild(maxDamage, damage, mode, gradient)
         return damageable
     }
 
-    private fun rebuild(maxDamage: Int, damage: Int, mode: DurabilityDisplayMode, gradient: Boolean) {
+    private fun rebuild(
+        maxDamage: Int,
+        damage: Int,
+        mode: DurabilityDisplayMode,
+        gradient: Boolean,
+    ) {
         primed = true
         this.maxDamage = maxDamage
         this.damage = damage
@@ -53,7 +64,10 @@ class DurabilityTextCache {
                 text = reading.label(mode)
                 color = if (gradient) durabilityColor(reading.fraction) else WHITE
             }
-            DurabilityReading.NotDamageable -> damageable = false
+
+            DurabilityReading.NotDamageable -> {
+                damageable = false
+            }
         }
     }
 }

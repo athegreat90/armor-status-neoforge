@@ -19,7 +19,14 @@ class LayoutCache {
      * The layout for these inputs, identical (same instance) to the previous result when nothing changed.
      * Invalid inputs throw exactly like [HudLayout.compute] and leave the cache untouched.
      */
-    fun layout(guiWidth: Int, guiHeight: Int, scale: Float, fontHeight: Int, anchor: HudAnchor, rowCount: Int): HudLayout {
+    fun layout(
+        guiWidth: Int,
+        guiHeight: Int,
+        scale: Float,
+        fontHeight: Int,
+        anchor: HudAnchor,
+        rowCount: Int,
+    ): HudLayout {
         val hit = cached
         if (hit != null &&
             guiWidth == this.guiWidth &&

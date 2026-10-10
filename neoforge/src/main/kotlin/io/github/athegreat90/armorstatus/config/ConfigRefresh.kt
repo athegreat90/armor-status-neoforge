@@ -11,7 +11,10 @@ import net.neoforged.neoforge.client.gui.IConfigScreenFactory
 
 /** Wiring between NeoForge's config system and the mod: file registration, refresh events, config screen. */
 internal object ConfigRefresh {
-    fun register(modBus: IEventBus, container: ModContainer) {
+    fun register(
+        modBus: IEventBus,
+        container: ModContainer,
+    ) {
         container.registerConfig(ModConfig.Type.CLIENT, ArmorStatusConfig.spec)
         // Safe to reference client classes: the entrypoint only loads on the client dist.
         container.registerExtensionPoint(IConfigScreenFactory::class.java, IConfigScreenFactory(::configScreen))
@@ -19,7 +22,10 @@ internal object ConfigRefresh {
         modBus.addListener(::onReloading)
     }
 
-    private fun configScreen(container: ModContainer, parent: Screen): Screen = ConfigurationScreen(container, parent)
+    private fun configScreen(
+        container: ModContainer,
+        parent: Screen,
+    ): Screen = ConfigurationScreen(container, parent)
 
     private fun onLoading(event: ModConfigEvent.Loading) = refreshIfOurs(event)
 

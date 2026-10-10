@@ -24,5 +24,8 @@ fun <T> Result<T>.rethrowFatal(): Result<T> {
  * passed to [onFailure] once and replaced by [default]; a fatal one (see [isFatal]) propagates and neither
  * callback runs. This is the only place the mod uses [runCatching]; never call it in the render path.
  */
-inline fun <T> loadOrDefault(default: () -> T, onFailure: (Throwable) -> Unit, load: () -> T): T =
-    runCatching(load).rethrowFatal().onFailure(onFailure).getOrElse { default() }
+inline fun <T> loadOrDefault(
+    default: () -> T,
+    onFailure: (Throwable) -> Unit,
+    load: () -> T,
+): T = runCatching(load).rethrowFatal().onFailure(onFailure).getOrElse { default() }

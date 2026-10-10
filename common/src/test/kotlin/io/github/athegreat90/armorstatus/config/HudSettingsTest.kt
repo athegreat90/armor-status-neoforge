@@ -51,19 +51,23 @@ class HudSettingsTest {
     @EnumSource(ArmorSlot::class)
     fun `each slot has its own toggle`(slot: ArmorSlot) {
         val allOff = HudSettings.Default.copy(showHead = false, showChest = false, showLegs = false, showFeet = false)
-        val withSlot = when (slot) {
-            ArmorSlot.HEAD -> allOff.copy(showHead = true)
-            ArmorSlot.CHEST -> allOff.copy(showChest = true)
-            ArmorSlot.LEGS -> allOff.copy(showLegs = true)
-            ArmorSlot.FEET -> allOff.copy(showFeet = true)
-        }
+        val withSlot =
+            when (slot) {
+                ArmorSlot.HEAD -> allOff.copy(showHead = true)
+                ArmorSlot.CHEST -> allOff.copy(showChest = true)
+                ArmorSlot.LEGS -> allOff.copy(showLegs = true)
+                ArmorSlot.FEET -> allOff.copy(showFeet = true)
+            }
         ArmorSlot.entries.forEach { assertEquals(it == slot, withSlot.shows(it), "$it") }
         ArmorSlot.entries.forEach { assertFalse(allOff.shows(it), "$it") }
     }
 
     @ParameterizedTest(name = "scale {0} -> {1}")
     @CsvSource("1.0, 1.0", "0.5, 0.5", "2.0, 2.0", "0.1, 0.5", "-3.0, 0.5", "7.5, 2.0", "1.25, 1.25")
-    fun `sanitized coerces scale into the allowed range`(scale: Double, expected: Float) {
+    fun `sanitized coerces scale into the allowed range`(
+        scale: Double,
+        expected: Float,
+    ) {
         assertEquals(expected, sanitized(scale = scale).scale)
     }
 
@@ -80,7 +84,10 @@ class HudSettingsTest {
 
     @ParameterizedTest(name = "anchor \"{0}\" -> {1}")
     @CsvSource("top_right, TOP_RIGHT", "BOTTOM_LEFT, BOTTOM_LEFT", "' Middle_Right ', MIDDLE_RIGHT")
-    fun `sanitized parses anchor names case-insensitively`(name: String, expected: HudAnchor) {
+    fun `sanitized parses anchor names case-insensitively`(
+        name: String,
+        expected: HudAnchor,
+    ) {
         assertEquals(expected, sanitized(anchorName = name).anchor)
     }
 
@@ -99,7 +106,10 @@ class HudSettingsTest {
 
     @ParameterizedTest(name = "mode \"{0}\" -> {1}")
     @CsvSource("percent, PERCENT", "RAW, RAW", "Percent, PERCENT")
-    fun `sanitized parses display mode names case-insensitively`(name: String, expected: DurabilityDisplayMode) {
+    fun `sanitized parses display mode names case-insensitively`(
+        name: String,
+        expected: DurabilityDisplayMode,
+    ) {
         assertEquals(expected, sanitized(displayModeName = name).displayMode)
     }
 
@@ -110,17 +120,18 @@ class HudSettingsTest {
 
     @Test
     fun `sanitized keeps every other value as given`() {
-        val result = HudSettings.sanitized(
-            enabled = false,
-            anchorName = "TOP_RIGHT",
-            scale = 1.5,
-            showHead = false,
-            showChest = true,
-            showLegs = false,
-            showFeet = true,
-            displayModeName = "PERCENT",
-            gradientColors = true,
-        )
+        val result =
+            HudSettings.sanitized(
+                enabled = false,
+                anchorName = "TOP_RIGHT",
+                scale = 1.5,
+                showHead = false,
+                showChest = true,
+                showLegs = false,
+                showFeet = true,
+                displayModeName = "PERCENT",
+                gradientColors = true,
+            )
         assertEquals(
             HudSettings(
                 enabled = false,

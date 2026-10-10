@@ -52,7 +52,13 @@ class HudLayoutTest {
         // odd leftover truncates: (241 - 72) / 2 = 84
         "MIDDLE_LEFT, 427, 241, 1.0, 84",
     )
-    fun `vertical origin follows the anchor`(anchor: HudAnchor, width: Int, height: Int, scale: Float, expectedY: Int) {
+    fun `vertical origin follows the anchor`(
+        anchor: HudAnchor,
+        width: Int,
+        height: Int,
+        scale: Float,
+        expectedY: Int,
+    ) {
         assertEquals(expectedY, layout(anchor = anchor, width = width, height = height, scale = scale).originY)
     }
 
@@ -88,7 +94,10 @@ class HudLayoutTest {
 
     @ParameterizedTest(name = "font {0} -> text offset {1}")
     @CsvSource("9, 4", "8, 5", "16, 1", "20, -1")
-    fun `text is vertically centred on the icon`(fontHeight: Int, expectedOffset: Int) {
+    fun `text is vertically centred on the icon`(
+        fontHeight: Int,
+        expectedOffset: Int,
+    ) {
         assertEquals(expectedOffset, layout(fontHeight = fontHeight).textOffsetY)
     }
 
@@ -146,10 +155,11 @@ class HudLayoutTest {
     companion object {
         @JvmStatic
         fun allAnchorsAndScales(): Stream<Arguments> =
-            HudAnchor.entries.flatMap { anchor ->
-                listOf(0.5f, 1.0f, 1.5f, 2.0f).flatMap { scale ->
-                    listOf(427 to 240, 320 to 180, 960 to 540).map { (w, h) -> Arguments.of(anchor, scale, w, h) }
-                }
-            }.stream()
+            HudAnchor.entries
+                .flatMap { anchor ->
+                    listOf(0.5f, 1.0f, 1.5f, 2.0f).flatMap { scale ->
+                        listOf(427 to 240, 320 to 180, 960 to 540).map { (w, h) -> Arguments.of(anchor, scale, w, h) }
+                    }
+                }.stream()
     }
 }

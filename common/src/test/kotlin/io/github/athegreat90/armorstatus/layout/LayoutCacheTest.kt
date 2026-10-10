@@ -9,7 +9,15 @@ import kotlin.test.assertNotSame
 import kotlin.test.assertSame
 
 class LayoutCacheTest {
-    private fun LayoutCache.base() = layout(guiWidth = 427, guiHeight = 240, scale = 1.0f, fontHeight = 9, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 4)
+    private fun LayoutCache.base() =
+        layout(
+            guiWidth = 427,
+            guiHeight = 240,
+            scale = 1.0f,
+            fontHeight = 9,
+            anchor = HudAnchor.MIDDLE_LEFT,
+            rowCount = 4,
+        )
 
     @Test
     fun `the first call computes the same layout as HudLayout compute`() {
@@ -26,19 +34,69 @@ class LayoutCacheTest {
     }
 
     @Test
-    fun `a different gui width recomputes`() = assertRecomputed { layout(guiWidth = 640, guiHeight = 240, scale = 1.0f, fontHeight = 9, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 4) }
+    fun `a different gui width recomputes`() =
+        assertRecomputed {
+            layout(
+                guiWidth = 640,
+                guiHeight = 240,
+                scale = 1.0f,
+                fontHeight = 9,
+                anchor = HudAnchor.MIDDLE_LEFT,
+                rowCount = 4,
+            )
+        }
 
     @Test
-    fun `a different gui height recomputes`() = assertRecomputed { layout(guiWidth = 427, guiHeight = 360, scale = 1.0f, fontHeight = 9, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 4) }
+    fun `a different gui height recomputes`() =
+        assertRecomputed {
+            layout(
+                guiWidth = 427,
+                guiHeight = 360,
+                scale = 1.0f,
+                fontHeight = 9,
+                anchor = HudAnchor.MIDDLE_LEFT,
+                rowCount = 4,
+            )
+        }
 
     @Test
-    fun `a different scale recomputes`() = assertRecomputed { layout(guiWidth = 427, guiHeight = 240, scale = 1.5f, fontHeight = 9, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 4) }
+    fun `a different scale recomputes`() =
+        assertRecomputed {
+            layout(
+                guiWidth = 427,
+                guiHeight = 240,
+                scale = 1.5f,
+                fontHeight = 9,
+                anchor = HudAnchor.MIDDLE_LEFT,
+                rowCount = 4,
+            )
+        }
 
     @Test
-    fun `a different font height recomputes`() = assertRecomputed { layout(guiWidth = 427, guiHeight = 240, scale = 1.0f, fontHeight = 20, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 4) }
+    fun `a different font height recomputes`() =
+        assertRecomputed {
+            layout(
+                guiWidth = 427,
+                guiHeight = 240,
+                scale = 1.0f,
+                fontHeight = 20,
+                anchor = HudAnchor.MIDDLE_LEFT,
+                rowCount = 4,
+            )
+        }
 
     @Test
-    fun `a different row count recomputes`() = assertRecomputed { layout(guiWidth = 427, guiHeight = 240, scale = 1.0f, fontHeight = 9, anchor = HudAnchor.MIDDLE_LEFT, rowCount = 2) }
+    fun `a different row count recomputes`() =
+        assertRecomputed {
+            layout(
+                guiWidth = 427,
+                guiHeight = 240,
+                scale = 1.0f,
+                fontHeight = 9,
+                anchor = HudAnchor.MIDDLE_LEFT,
+                rowCount = 2,
+            )
+        }
 
     @ParameterizedTest(name = "anchor {0}")
     @EnumSource(HudAnchor::class)

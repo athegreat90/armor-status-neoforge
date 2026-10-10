@@ -54,7 +54,16 @@ data class HudSettings(
             HudSettings(
                 enabled = enabled,
                 anchor = parseEnum(anchorName, Default.anchor),
-                scale = if (scale.isNaN()) Default.scale else scale.coerceIn(MIN_SCALE.toDouble(), MAX_SCALE.toDouble()).toFloat(),
+                scale =
+                    if (scale.isNaN()) {
+                        Default.scale
+                    } else {
+                        scale
+                            .coerceIn(
+                                MIN_SCALE.toDouble(),
+                                MAX_SCALE.toDouble(),
+                            ).toFloat()
+                    },
                 showHead = showHead,
                 showChest = showChest,
                 showLegs = showLegs,
@@ -63,7 +72,10 @@ data class HudSettings(
                 gradientColors = gradientColors,
             )
 
-        private inline fun <reified E : Enum<E>> parseEnum(name: String?, default: E): E {
+        private inline fun <reified E : Enum<E>> parseEnum(
+            name: String?,
+            default: E,
+        ): E {
             val wanted = name?.trim()
             return enumValues<E>().firstOrNull { it.name.equals(wanted, ignoreCase = true) } ?: default
         }

@@ -54,7 +54,10 @@ internal class ArmorStatusLayer : GuiLayer {
 
     private var failed = false
 
-    override fun render(graphics: GuiGraphicsExtractor, deltaTracker: DeltaTracker) {
+    override fun render(
+        graphics: GuiGraphicsExtractor,
+        deltaTracker: DeltaTracker,
+    ) {
         if (failed) return
         try {
             draw(graphics)
@@ -83,7 +86,15 @@ internal class ArmorStatusLayer : GuiLayer {
             if (!settings.shows(SLOTS[i])) continue
             val stack = player.getItemBySlot(EQUIPMENT_SLOTS[i])
             if (stack.isEmpty || !stack.isDamageableItem) continue
-            if (!textCaches[i].update(stack.maxDamage, stack.damageValue, settings.displayMode, settings.gradientColors)) continue
+            if (!textCaches[i].update(
+                    stack.maxDamage,
+                    stack.damageValue,
+                    settings.displayMode,
+                    settings.gradientColors,
+                )
+            ) {
+                continue
+            }
             rowStacks[rows] = stack
             rowSlots[rows] = i
             rows++
@@ -91,7 +102,15 @@ internal class ArmorStatusLayer : GuiLayer {
         if (rows == 0) return
 
         val canvas = HudCanvas(graphics)
-        val layout = layoutCache.layout(canvas.guiWidth, canvas.guiHeight, settings.scale, HudCanvas.fontHeight, settings.anchor, rows)
+        val layout =
+            layoutCache.layout(
+                canvas.guiWidth,
+                canvas.guiHeight,
+                settings.scale,
+                HudCanvas.fontHeight,
+                settings.anchor,
+                rows,
+            )
         canvas.pushScale(settings.scale)
         try {
             for (row in 0 until rows) {
@@ -108,7 +127,11 @@ internal class ArmorStatusLayer : GuiLayer {
         }
     }
 
-    private fun widthOf(canvas: HudCanvas, slot: Int, text: String): Int {
+    private fun widthOf(
+        canvas: HudCanvas,
+        slot: Int,
+        text: String,
+    ): Int {
         if (measuredText[slot] !== text) {
             measuredText[slot] = text
             measuredWidth[slot] = canvas.textWidth(text)

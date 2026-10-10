@@ -14,7 +14,10 @@ class DurabilityLabelTest {
 
     @ParameterizedTest(name = "{0}/{1} raw -> {0}")
     @CsvSource("123, 363", "363, 363", "0, 363", "1, 1")
-    fun `raw label is the remaining durability as an integer`(remaining: Int, max: Int) {
+    fun `raw label is the remaining durability as an integer`(
+        remaining: Int,
+        max: Int,
+    ) {
         assertEquals(remaining.toString(), Damageable(remaining, max).label(DurabilityDisplayMode.RAW))
     }
 
@@ -36,7 +39,11 @@ class DurabilityLabelTest {
         "1, 3, 33%",
         "2, 3, 67%",
     )
-    fun `percent label rounds half up and never lies at the extremes`(remaining: Int, max: Int, expected: String) {
+    fun `percent label rounds half up and never lies at the extremes`(
+        remaining: Int,
+        max: Int,
+        expected: String,
+    ) {
         assertEquals(expected, Damageable(remaining, max).label(DurabilityDisplayMode.PERCENT))
     }
 

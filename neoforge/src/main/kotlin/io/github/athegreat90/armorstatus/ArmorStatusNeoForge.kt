@@ -13,7 +13,10 @@ import net.neoforged.fml.common.Mod
  * It is a class, not an `object`, because the constructor receives the mod event bus and container.
  */
 @Mod(value = MOD_ID, dist = [Dist.CLIENT])
-class ArmorStatusNeoForge(modBus: IEventBus, container: ModContainer) {
+class ArmorStatusNeoForge(
+    modBus: IEventBus,
+    container: ModContainer,
+) {
     init {
         ConfigRefresh.register(modBus, container)
         HudRegistration.register(modBus)

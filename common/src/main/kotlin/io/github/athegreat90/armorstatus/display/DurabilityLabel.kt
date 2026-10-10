@@ -20,7 +20,9 @@ fun DurabilityReading.Damageable.label(mode: DurabilityDisplayMode): String =
 private fun DurabilityReading.Damageable.percent(): Int =
     when (remaining) {
         0 -> 0
+
         max -> 100
+
         // Long arithmetic: 200 * remaining overflows Int for large durabilities.
         else -> ((200L * remaining + max) / (2L * max)).toInt().coerceIn(1, 99)
     }

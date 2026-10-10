@@ -50,7 +50,11 @@ class RecoveryTest {
     @Test
     fun `loadOrDefault returns the loaded value`() {
         val calls = Calls()
-        val value = loadOrDefault(default = { calls.defaults++; 0 }, onFailure = { calls.failures++ }) { 42 }
+        val value =
+            loadOrDefault(default = {
+                calls.defaults++
+                0
+            }, onFailure = { calls.failures++ }) { 42 }
         assertEquals(42, value)
         assertEquals(0, calls.defaults)
         assertEquals(0, calls.failures)
@@ -61,10 +65,17 @@ class RecoveryTest {
     fun `loadOrDefault falls back and reports a recoverable failure exactly once`(error: Throwable) {
         val calls = Calls()
         val reported = mutableListOf<Throwable>()
-        val value = loadOrDefault(
-            default = { calls.defaults++; -1 },
-            onFailure = { calls.failures++; reported += it },
-        ) { throw error }
+        val value =
+            loadOrDefault(
+                default = {
+                    calls.defaults++
+                    -1
+                },
+                onFailure = {
+                    calls.failures++
+                    reported += it
+                },
+            ) { throw error }
         assertEquals(-1, value)
         assertEquals(1, calls.defaults)
         assertEquals(1, calls.failures)
@@ -75,9 +86,13 @@ class RecoveryTest {
     @MethodSource("fatalThrowables")
     fun `loadOrDefault propagates fatal failures without touching default or onFailure`(error: Throwable) {
         val calls = Calls()
-        val thrown = assertFailsWith<Throwable> {
-            loadOrDefault(default = { calls.defaults++; -1 }, onFailure = { calls.failures++ }) { throw error }
-        }
+        val thrown =
+            assertFailsWith<Throwable> {
+                loadOrDefault(default = {
+                    calls.defaults++
+                    -1
+                }, onFailure = { calls.failures++ }) { throw error }
+            }
         assertSame(error, thrown)
         assertEquals(0, calls.defaults)
         assertEquals(0, calls.failures)

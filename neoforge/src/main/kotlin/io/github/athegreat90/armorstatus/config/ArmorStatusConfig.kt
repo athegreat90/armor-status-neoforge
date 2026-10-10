@@ -60,6 +60,8 @@ internal object ArmorStatusConfig {
             gradientColors = gradientColors.get(),
         )
 
-    private fun ModConfigSpec.Builder.entry(key: String, comment: String): ModConfigSpec.Builder =
-        comment(comment).translation("$MOD_ID.configuration.$key")
+    private fun ModConfigSpec.Builder.entry(
+        key: String,
+        comment: String,
+    ): ModConfigSpec.Builder = comment(comment).translation("$MOD_ID.configuration.$key")
 }
