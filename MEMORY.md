@@ -101,15 +101,22 @@ F3 position follow-up smoke (2026-10-10): `runClient "-PmcVersion=26.2" "-Pquick
 
 Detail of the render-path smoke: probe logs `SMOKE first draw rows=4` on 26.1.2 and 26.2 and `rows=3` (chest hidden, right-aligned) on 26.3; the probe was removed afterwards. Config corruption on 26.1.2 was corrected by NeoForge or recreated with defaults.
 
-### Manual verification (2026-10-10, Minecraft 26.2 only)
+### Manual verification (2026-10-10, Minecraft 26.2)
 
 The user ran the dev client against the NeoForge dev server (`runServer` and `runClient "-PmcVersion=26.2"`) and confirmed the HUD in game ("It's perfect"). For the F3 behaviour the user checked two screenshots: the compact HUD at `MIDDLE_LEFT` sat under the F3 text (which led to `debugScreenAnchor`), and with the default `BOTTOM_RIGHT` the F3 text is fully readable and the compact armor stack sits in the bottom-right corner.
 
-**Not verified:** the same checks on 26.1.2 and 26.3 (compile and log smoke only); GUI scales 1 to 4, spectator, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen (no recorded check); the config screen (no recorded check); joining a vanilla (non-NeoForge) server with the mod installed.
+### Manual verification (2026-10-11, Minecraft 26.1.2 and 26.3)
+
+Same setup on each version: a NeoForge dev server in its own folder (`runServer "-PmcVersion=<v>" "-PserverDir=run/server-<v>"` through the out-of-repo init script, fresh world, because a 26.1.2 server cannot load the 26.2 world) and `runClient "-PmcVersion=<v>" "-PquickJoin=localhost:25565"`. The user equipped armor and took screenshots; they were reviewed afterwards (the user gave no verbal verdict this time).
+
+- 26.1.2 (NeoForge 26.1.2.115), `neoforge/run/screenshots/2026-10-11_00.38.00.png` and `00.38.17.png`: four rows at `MIDDLE_LEFT`, each with an icon and a shadowed number (407, 592, 555, 481, which look like full-durability values), nothing overlapping the vanilla HUD. With F3 open the debug text is readable and the compact stack sits in the bottom-right corner, number left of the icon. Client log: mod loaded, no warnings, no `ERROR`/`Exception`.
+- 26.3 (NeoForge 26.3.0.64-beta, FML 12.0.9), `2026-10-11_00.43.12.png` and `00.43.14.png`: the same HUD and the same F3 result. Client log: mod loaded, no `logoFile` warning, no `ERROR`/`Exception`.
+
+**Not verified:** damaged and near-broken armor, empty slots, GUI scales 1 to 4, spectator, F1, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen, on any version (no recorded check); the mod-list icon and the config screen (not visible in the screenshots); joining a vanilla (non-NeoForge) server with the mod installed.
 
 ## Known issues
 
-- Visual checks are done on 26.2 only (default settings and the F3 compact layout). The rest of the manual checklist is pending, see "Manual verification".
+- The default layout and the F3 compact layout were checked on screen on 26.1.2, 26.2 and 26.3. The rest of the manual checklist is pending, see "Manual verification".
 - 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
 - Config screen shows raw enum names.
 - Joining a vanilla server is untested; client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
@@ -155,7 +162,7 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 
 1. T11: done so far with approval: Modrinth project and credentials, release dry run, `[0.1.0]` changelog section. Still waiting for explicit approval: making the repository public, making the Modrinth project public, and tagging `v0.1.0`.
 2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `iconFile`/`iconBlur` on 26.2 and 26.3 and `logoFile`/`logoBlur` on 26.1.2 (see "Version specifics learned").
-3. Finish the manual visual checklist: 26.2 is done for the default layout and F3. Still open on 26.1.2 and 26.3, and on 26.2 for partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
+3. Finish the manual visual checklist: the default layout and F3 are done on all three versions. Still open on every version: partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
 4. Join a vanilla server with the mod installed.
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
 6. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
