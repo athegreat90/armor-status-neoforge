@@ -68,7 +68,7 @@ Fabric (upstream) to NeoForge (ours):
 | Mod Menu + `/armorstatus config` | `ConfigurationScreen` through `IConfigScreenFactory` |
 | `fabric.mod.json` | `neoforge.mods.toml` with `modLoader = "klf"` |
 
-Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEntries.isOverlayVisible()` is true (`KeyboardHandler` calls `toggleDebugOverlay()`); the declaration is identical on 26.1.2, 26.2 and 26.3, so it lives in `neoforge/src/main`, not in an overlay. `DebugScreenOverlay#showDebugScreen()` is not used: it is also true for "always on" entries (performance profile FPS line) and copies a list per call. Hide-GUI is `Options#hideGui` on 26.1.x and `gui.hud.isHidden()` on 26.2 and 26.3. Constructor injection needs a class, not an `object`. NeoForge corrects invalid config values itself (clamp numbers, reset bad enums and booleans) before our code reads them.
+Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEntries.isOverlayVisible()` is true (`KeyboardHandler` calls `toggleDebugOverlay()`); the declaration is identical on 26.1.2, 26.2 and 26.3, so it lives in `neoforge/src/main`, not in an overlay. `DebugScreenOverlay#showDebugScreen()` is not used: it is also true for "always on" entries (performance profile FPS line) and copies a list per call. Hide-GUI is `Options#hideGui` on 26.1.x and `gui.hud.isHidden()` on 26.2 and 26.3. Mod-list icon keys: NeoForge 26.2 and 26.3 read `iconFile`/`iconBlur` (and `bannerFile`) and log a startup warning for the deprecated `logoFile` (`LogoFileWarningsHandler`); NeoForge 26.1.2 only knows `logoFile`/`logoBlur`. The keys come from `mod_icon_file_key`/`mod_icon_blur_key` in `gradle/mc/*.properties`, and `verifyModMetadata` rejects `logoFile` on 26.2 and 26.3. Constructor injection needs a class, not an `object`. NeoForge corrects invalid config values itself (clamp numbers, reset bad enums and booleans) before our code reads them.
 
 ## Progress
 
@@ -154,7 +154,7 @@ The user ran the dev client against the NeoForge dev server (`runServer` and `ru
 ## Next steps
 
 1. T11: stop and ask for explicit approval before each of these: making the repository public, creating the Modrinth project (secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`), adding a `[0.1.0]` section to `CHANGELOG.md`, dry-running `release.yml` with `workflow_dispatch`, and tagging.
-2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `logoFile = "icon.png"` and `logoBlur = false`.
+2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `iconFile`/`iconBlur` on 26.2 and 26.3 and `logoFile`/`logoBlur` on 26.1.2 (see "Version specifics learned").
 3. Finish the manual visual checklist: 26.2 is done for the default layout and F3. Still open on 26.1.2 and 26.3, and on 26.2 for partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
 4. Join a vanilla server with the mod installed.
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").

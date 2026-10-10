@@ -102,6 +102,8 @@ val generateModMetadata =
                 "mod_authors" to modAuthors,
                 "neo_version" to mc.getProperty("neo_version"),
                 "minecraft_version_range" to mc.getProperty("minecraft_version_range"),
+                "mod_icon_file_key" to mc.getProperty("mod_icon_file_key"),
+                "mod_icon_blur_key" to mc.getProperty("mod_icon_blur_key"),
             )
         inputs.properties(replaceProperties)
         expand(replaceProperties)
@@ -134,8 +136,10 @@ val verifyModMetadata =
                 .file("ModConstants.kt")
         val minecraftRange = mc.getProperty("minecraft_version_range")
         val neoVersion = mc.getProperty("neo_version")
+        val iconFileKey = mc.getProperty("mod_icon_file_key")
         inputs.files(modJar, modConstants)
         inputs.property("modId", modId)
+        inputs.property("iconFileKey", iconFileKey)
         inputs.property("minecraftRange", minecraftRange)
         inputs.property("neoVersion", neoVersion)
 
@@ -162,7 +166,8 @@ val verifyModMetadata =
             // The text before the first table holds the top-level keys; every [[...]] table starts a new chunk.
             val tables = toml.split(Regex("""(?m)^(?=\[\[)"""))
             val header = tables.first()
-            val jarModId = tables.firstOrNull { it.startsWith("[[mods]]") }?.tomlString("modId")
+            val modsTable = tables.firstOrNull { it.startsWith("[[mods]]") }
+            val jarModId = modsTable?.tomlString("modId")
             val dependencies = tables.filter { it.startsWith("[[dependencies.") }
             val minecraftDep = dependencies.firstOrNull { it.tomlString("modId") == "minecraft" }
             val neoForgeDep = dependencies.firstOrNull { it.tomlString("modId") == "neoforge" }
@@ -181,6 +186,11 @@ val verifyModMetadata =
             if (header.tomlString("license").isNullOrBlank()) problems += "license: missing or blank"
             expect("modId (jar) vs mod_id (gradle.properties)", jarModId, modId)
             expect("MOD_ID (ModConstants.kt) vs mod_id (gradle.properties)", constantModId, modId)
+            expect("icon ($iconFileKey)", modsTable?.tomlString(iconFileKey), "icon.png")
+            // NeoForge 26.2+ warns about the deprecated logoFile key at startup, so it must not come back there.
+            if (iconFileKey != "logoFile" && modsTable?.tomlString("logoFile") != null) {
+                problems += "logoFile is deprecated for this Minecraft version; use $iconFileKey"
+            }
             expect("minecraft versionRange", minecraftDep?.tomlString("versionRange"), minecraftRange)
             val neoRange = neoForgeDep?.tomlString("versionRange")
             if (neoRange?.startsWith("[$neoVersion") != true) {
