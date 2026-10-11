@@ -1,6 +1,6 @@
 # Feature: gradle-junit-weapon-tooltip
 
-Plan of record: `C:\Users\alexa\.claude\plans\dazzling-splashing-parnas.md` (revision 2, approved by the user on 2026-10-11).
+Plan of record: the approved session plan, revision 2, of 2026-10-11 (kept outside the repository; its decisions are summarised in this document).
 
 ## Objective
 Three maintenance/feature items on the existing Armor Status NeoForge mod: (1) upgrade Gradle to the newest stable version verified on all three targets (Minecraft 26.1.2, 26.2, 26.3); (2) harden the JUnit 6 setup (JUnit 6.1.3 is already in place, so no migration); (3) show weapon durability in the item hover tooltip (inventory, chests, creative menu and other container screens), client side only. The armor HUD is not changed.

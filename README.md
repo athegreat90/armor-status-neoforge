@@ -59,7 +59,7 @@ NeoForge corrects invalid values in the file: numbers are clamped to the nearest
 
 ## Development
 
-The project can live in any directory; the build does not depend on an absolute path. The author's local checkout is `C:\Users\alexa\Documents\GitRepo\armor-status-neoforge`.
+The project can live in any directory; the build does not depend on an absolute path. Commands below are run from the repository root.
 
 ### Prerequisites
 

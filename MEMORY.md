@@ -147,7 +147,7 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 
 ## Local development
 
-- Windows path `C:\Users\alexa\Documents\GitRepo\armor-status-neoforge`; WSL path `/mnt/c/Users/alexa/Documents/GitRepo/armor-status-neoforge`.
+- Work from the repository root, on native Windows (PowerShell) or WSL; no absolute path is needed.
 - Commands (PowerShell, from the repo root; quote `-PmcVersion`):
 
 ```powershell

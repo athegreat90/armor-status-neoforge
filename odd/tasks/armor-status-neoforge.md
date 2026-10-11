@@ -1,6 +1,6 @@
 # Feature: armor-status-neoforge
 
-Plan of record: `C:\Users\alexa\.claude\plans\dazzling-splashing-parnas.md` (approved 2026-10-10).
+Plan of record: the approved session plan of 2026-10-10 (kept outside the repository; its content is summarised in this document).
 
 ## Objective
 Client-only NeoForge port of the Armor Status HUD idea (ShirjeelPlays, Fabric), written in idiomatic Kotlin on KotlinLangForge, for Minecraft 26.1.2 / 26.2 / 26.3, Java 25, with CI and Modrinth release automation.

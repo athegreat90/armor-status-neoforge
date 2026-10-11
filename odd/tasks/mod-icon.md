@@ -25,7 +25,7 @@ Give Armor Status NeoForge an original, recognizable icon for the mod list and p
   - Runtime scenario: N/A for passive image generation; in-game appearance remains manual unless observed.
   - Rollback boundary: remove new icon assets, revert only logo metadata and icon-related documentation.
   - Verification: observed metadata assertion RED before integration and GREEN after; Gradle metadata/JAR check passed for 26.2; Python validated PNG CRCs, dimensions, decompression, exact SVG pixels, all metadata stages, and identical packaged bytes; `git diff --check` passed. Parent repeated the structural verifier successfully and visually read the PNG.
-  - Structural rerun: `python "C:\Users\alexa\AppData\Local\Temp\opencode\icon01-verify.py" "C:\Users\alexa\Documents\GitRepo\armor-status-neoforge"` (external check-only temporary script, not a permanent repository test).
+  - Structural rerun: `python <temporary icon01-verify.py> <repository root>` (external check-only temporary script, not a permanent repository test).
   - PNG SHA-256: `367fb2c6fb5896e538254a14a3a3f65277fe925df5246fb798ac355c5b7c40ff`.
   - Limitations: in-game mod-list appearance unverified; only target 26.2 was rebuilt for this shared asset.
   - Commit: `8eb1856eafb899552e0f4f5e21a36e5ae1a87360` — `feat(mod): add original armor status icon`.
