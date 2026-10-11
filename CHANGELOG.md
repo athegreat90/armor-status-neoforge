@@ -6,12 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-11
+
+Adds the weapon durability hover tooltip. The armor HUD is unchanged.
+
 ### Added
 
 - Weapon durability line in the item hover tooltip (inventory, chests, creative menu and other container screens), for example `Durability: 1480 / 1561 (95%)`, right under the item name. Weapons are swords, axes, spears, the mace, the trident, the bow, the crossbow and modded items that use the standard weapon tags or the spear components. The line is skipped for advanced tooltips (F3+H) and for the creative search index. It is client side only and adds no networking.
 - New `[weaponTooltip]` config section: `enabled`, `showMax`, `showPercent`, `showUndamaged`, `colorScheme` (`TIERS`, `WHITE`, `GRADIENT`), `lowDurabilityWarning`, `warningThresholdPercent` (`1` to `99`, default `15`) and `includeAxes`. Existing armor keys and defaults are unchanged.
 - Colour tiers for the tooltip line: green above 50%, yellow 26 to 50%, orange down to the warning threshold, red at or below it.
-- Shared durability helpers in `common` (`percentRounded`, `isLow`, `ColorScheme`), the weapon classification (`classifyWeapon`) and the tooltip decision (`tooltipDurability`), with unit tests.
+- Shared durability helpers in `common` (`percentRounded`, `isLow`, `ColorScheme`), the weapon classification (`classifyWeapon`) and the tooltip decision (`tooltipDurability`), with unit tests (533 in total).
 
 ### Changed
 
@@ -21,7 +25,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Known issues
 
-- The weapon tooltip was seen in game only on a Trident (26.1.2) and a Netherite Axe (26.3), both undamaged, plus a user report for 26.2. Damaged weapons and the yellow, orange and red tiers, the other weapon types, the F3+H and creative search skips, the config screen section, live config changes and a vanilla server with the tooltip have not been checked.
+- Verified by a headless probe on a real dedicated dev server for each of Minecraft 26.1.2, 26.2 and 26.3 (2026-10-11; the mod was loaded on the server for the probe only, with a fake player and the real `ItemStack.getTooltipLines` firing the real `ItemTooltipEvent` into the real listener): 60 of 60 checks passed on each version with no mod errors. That covers the stack-to-weapon mapping over the whole item registry (the same 25 damageable vanilla weapons on all three versions, no misclassification), the line text, the colour tiers and their boundaries, the position under the item name, the other weapon types, the items that get no line, the skips for advanced tooltips and for a missing player, and the effect of the `[weaponTooltip]` settings.
+- Seen on screen so far: the green, undamaged line on a Trident in the creative menu (26.1.2) and on a Netherite Axe (26.3), plus a user report for 26.2. Not checked on screen: the colours of the damaged tiers, GUI hover behaviour beyond those observations, the creative menu search itself, the `[weaponTooltip]` section in the config screen, config changes while the game runs (reload from the file), and a vanilla server with the tooltip. The config upgrade from a real 0.1.0 file was checked on 26.2 only, not on 26.1.2 or 26.3.
 - Tooltip text is English only. A datapack item that hides only its damage component still gets the line, and a modded weapon without the standard tags or spear components gets none.
 
 ## [0.1.0] - 2026-10-11
