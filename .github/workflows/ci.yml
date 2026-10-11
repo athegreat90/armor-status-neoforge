@@ -59,8 +59,40 @@ jobs:
           path: neoforge/build/libs/*.jar
           if-no-files-found: error
 
-      - name: Upload test reports on failure
-        if: failure()
+      # Totals of the JUnit XML reports (one file per test class); reads only files the build produced.
+      - name: Test summary
+        if: always()
+        env:
+          MC: ${{ matrix.mc }}
+        run: |
+          set -- common/build/test-results/test/*.xml
+          {
+            echo "### Unit tests (Minecraft $MC)"
+            if [ -e "$1" ]; then
+              awk '
+                /<testsuite / {
+                  suites++
+                  line = $0
+                  tests += attr(line, "tests"); failures += attr(line, "failures")
+                  errors += attr(line, "errors"); skipped += attr(line, "skipped")
+                }
+                function attr(s, name,   m) {
+                  if (match(s, " " name "=\"[0-9]+\"")) {
+                    m = substr(s, RSTART + length(name) + 3, RLENGTH - length(name) - 4)
+                    return m + 0
+                  }
+                  return 0
+                }
+                END {
+                  printf "%d suites, %d tests, %d failures, %d errors, %d skipped\n", suites, tests, failures, errors, skipped
+                }' "$@"
+            else
+              echo "No test result files found in common/build/test-results/test."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test reports
+        if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: reports-mc${{ matrix.mc }}

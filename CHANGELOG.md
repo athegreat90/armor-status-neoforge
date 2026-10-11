@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Gradle Wrapper updated from 9.2.1 to 9.8.1.
+- Test run is guarded by a `verifyTestResults` check (no undiscovered, skipped or missing test classes) and CI always uploads the test reports with a summary.
 
 ## [0.1.0] - 2026-10-11
 

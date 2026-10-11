@@ -2,7 +2,11 @@
 
 ## Stack
 
-JUnit 5 (JUnit BOM 6.1.3, Platform launcher) with `kotlin-test` and `junit-jupiter-params`, in `common/src/test`.
+JUnit Jupiter 6.1.3 (JUnit BOM, `junit-jupiter` aggregator with API, params and engine, plus the Platform launcher) with `kotlin-test`, in `common/src/test`. No JUnit 4, Vintage or mocking library. Test classes must be named `<Name>Test` in `<Name>Test.kt` under the package path.
+
+`tasks.test` sets `failOnNoDiscoveredTests = true`, logs passed/skipped/failed tests and writes XML and HTML reports. The `verifyTestResults` task (finalizer of `test`, also part of `check`) fails the build when no test ran, any test was skipped (`@Disabled`, assumptions), failed or errored, or a `*Test.kt` file has no result file or ran 0 tests. So every `*Test.kt` must produce results; do not leave a test disabled, delete it or fix it. A filtered run (`--tests "*Name"`) skips only the per-class completeness check, because it leaves the other classes without results on purpose; the skipped, failed and zero-tests checks still apply. `verifyModMetadata` also fails if the mod jar contains `org/junit/` or `kotlin/test/` entries.
+
+In CI the `common/build/reports` and `test-results` folders are uploaded as artifact `reports-mc<version>` on every run (not only on failure), and the job summary shows suites, tests, failures, errors and skipped.
 
 ## What to test
 

@@ -103,7 +103,7 @@ The HUD runs every frame, so the render path uses indexed loops over fixed array
 
 ### Tests
 
-`common` has JUnit 5 and kotlin-test unit tests covering durability reading, text and colour, layout for every anchor, settings validation, the visibility rule, caches, and error recovery.
+`common` has JUnit Jupiter 6.1.3 and kotlin-test unit tests covering durability reading, text and colour, layout for every anchor, settings validation, the visibility rule, caches, and error recovery. The `verifyTestResults` check, part of `check`, fails the build if no test ran, a test was skipped, or a test class produced no results. CI uploads the test reports on every run and prints a summary.
 
 NeoForge-bound code has no unit tests. It is verified by compilation on all three targets, by the metadata check on the built jar, and by dev-client runs. Unit tests are not evidence of in-game behaviour.
 
