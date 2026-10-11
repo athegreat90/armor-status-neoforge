@@ -13,5 +13,15 @@
   "armorstatusneoforge.configuration.gradientColors": "Gradient Colors",
   "armorstatusneoforge.configuration.debugScreenMode": "Debug Screen (F3) Behaviour",
   "armorstatusneoforge.configuration.debugScreenScale": "Compact Scale in Debug Screen (F3)",
-  "armorstatusneoforge.configuration.debugScreenAnchor": "Position in Debug Screen (F3)"
+  "armorstatusneoforge.configuration.debugScreenAnchor": "Position in Debug Screen (F3)",
+  "armorstatusneoforge.configuration.weaponTooltip": "Weapon Tooltip",
+  "armorstatusneoforge.configuration.weaponTooltipEnabled": "Show Weapon Durability",
+  "armorstatusneoforge.configuration.weaponTooltipShowMax": "Show Maximum Durability",
+  "armorstatusneoforge.configuration.weaponTooltipShowPercent": "Show Durability Percent",
+  "armorstatusneoforge.configuration.weaponTooltipShowUndamaged": "Show for Undamaged Weapons",
+  "armorstatusneoforge.configuration.weaponTooltipColorScheme": "Color Scheme",
+  "armorstatusneoforge.configuration.weaponTooltipLowDurabilityWarning": "Low Durability Warning",
+  "armorstatusneoforge.configuration.weaponTooltipWarningThresholdPercent": "Low Durability Threshold (%)",
+  "armorstatusneoforge.configuration.weaponTooltipIncludeAxes": "Include Axes",
+  "armorstatusneoforge.tooltip.durability": "Durability: %s"
 }

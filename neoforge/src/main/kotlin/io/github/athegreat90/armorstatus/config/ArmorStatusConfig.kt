@@ -1,6 +1,7 @@
 package io.github.athegreat90.armorstatus.config
 
 import io.github.athegreat90.armorstatus.MOD_ID
+import io.github.athegreat90.armorstatus.display.ColorScheme
 import io.github.athegreat90.armorstatus.display.DurabilityDisplayMode
 import io.github.athegreat90.armorstatus.layout.HudAnchor
 import net.neoforged.neoforge.common.ModConfigSpec
@@ -9,7 +10,8 @@ import net.neoforged.neoforge.common.ModConfigSpec
  * The client configuration file (`armorstatusneoforge-client.toml`) as a [ModConfigSpec].
  *
  * Only [read] touches the spec values, and it must only run while NeoForge reports a loaded config
- * (see [ConfigRefresh]). The render path reads the immutable [ActiveHudSettings] snapshot instead.
+ * (see [ConfigRefresh]). The render path reads the immutable [ActiveHudSettings] snapshot instead. The weapon tooltip
+ * options live in their own `[weaponTooltip]` section, after the armor HUD entries.
  */
 internal object ArmorStatusConfig {
     private val builder = ModConfigSpec.Builder()
@@ -64,6 +66,8 @@ internal object ArmorStatusConfig {
                     "BOTTOM_RIGHT leaves the debug text uncovered.",
             ).defineEnum("debugScreenAnchor", HudAnchor.BOTTOM_RIGHT)
 
+    private val weaponTooltip = defineWeaponTooltip()
+
     val spec: ModConfigSpec = builder.build()
 
     /**
@@ -84,7 +88,77 @@ internal object ArmorStatusConfig {
             debugScreenModeName = debugScreenMode.get().name,
             debugScreenScale = debugScreenScale.get(),
             debugScreenAnchorName = debugScreenAnchor.get().name,
+            weaponTooltip =
+                WeaponTooltipSettings.sanitized(
+                    enabled = weaponTooltip.enabled.get(),
+                    showMax = weaponTooltip.showMax.get(),
+                    showPercent = weaponTooltip.showPercent.get(),
+                    showUndamaged = weaponTooltip.showUndamaged.get(),
+                    colorSchemeName = weaponTooltip.colorScheme.get().name,
+                    lowDurabilityWarning = weaponTooltip.lowDurabilityWarning.get(),
+                    warningThresholdPercent = weaponTooltip.warningThresholdPercent.get().toDouble(),
+                    includeAxes = weaponTooltip.includeAxes.get(),
+                ),
         )
+
+    /** Defines the `[weaponTooltip]` section; it must stay after every armor entry so their order is unchanged. */
+    private fun defineWeaponTooltip(): WeaponTooltipValues {
+        builder.entry("weaponTooltip", "Weapon durability line in the item hover tooltip.").push("weaponTooltip")
+        val values =
+            WeaponTooltipValues(
+                enabled =
+                    builder
+                        .entry("weaponTooltipEnabled", "Add the durability line to weapon tooltips.")
+                        .define("enabled", true),
+                showMax =
+                    builder
+                        .entry("weaponTooltipShowMax", "Show the maximum durability, as in 1480 / 1561.")
+                        .define("showMax", true),
+                showPercent =
+                    builder
+                        .entry("weaponTooltipShowPercent", "Show the remaining durability as a percentage.")
+                        .define("showPercent", true),
+                showUndamaged =
+                    builder
+                        .entry("weaponTooltipShowUndamaged", "Also show the line for weapons that are not damaged.")
+                        .define("showUndamaged", true),
+                colorScheme =
+                    builder
+                        .entry(
+                            "weaponTooltipColorScheme",
+                            "WHITE is plain, GRADIENT fades from green to red, TIERS uses green, yellow, orange and red.",
+                        ).defineEnum("colorScheme", ColorScheme.TIERS),
+                lowDurabilityWarning =
+                    builder
+                        .entry(
+                            "weaponTooltipLowDurabilityWarning",
+                            "Show the red tier in TIERS when durability is low. When off, it is shown as orange.",
+                        ).define("lowDurabilityWarning", true),
+                warningThresholdPercent =
+                    builder
+                        .entry(
+                            "weaponTooltipWarningThresholdPercent",
+                            "Durability percent at or below which a weapon counts as low.",
+                        ).defineInRange("warningThresholdPercent", 15, MIN_WARNING_THRESHOLD, MAX_WARNING_THRESHOLD),
+                includeAxes =
+                    builder
+                        .entry("weaponTooltipIncludeAxes", "Count axes as weapons.")
+                        .define("includeAxes", true),
+            )
+        builder.pop()
+        return values
+    }
+
+    private class WeaponTooltipValues(
+        val enabled: ModConfigSpec.BooleanValue,
+        val showMax: ModConfigSpec.BooleanValue,
+        val showPercent: ModConfigSpec.BooleanValue,
+        val showUndamaged: ModConfigSpec.BooleanValue,
+        val colorScheme: ModConfigSpec.EnumValue<ColorScheme>,
+        val lowDurabilityWarning: ModConfigSpec.BooleanValue,
+        val warningThresholdPercent: ModConfigSpec.IntValue,
+        val includeAxes: ModConfigSpec.BooleanValue,
+    )
 
     private fun ModConfigSpec.Builder.entry(
         key: String,
