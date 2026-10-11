@@ -121,7 +121,11 @@ tasks.test {
         junitXml.required = true
         html.required = true
     }
+    // Runs the guard after a direct `:common:test` (and when the tests fail), not only through `check`.
     finalizedBy(verifyTestResults)
 }
 
+// Both links are needed: the finalizer above covers a direct `:common:test`, while this dependency makes `check`
+// still run the guard when `test` is not scheduled (for example `check -x test`); a finalizer only fires when the
+// task it finalizes is part of the build.
 tasks.check { dependsOn(verifyTestResults) }

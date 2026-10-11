@@ -145,20 +145,21 @@ val verifyModMetadata =
 
         doLast {
             val jarFile = modJar.get().asFile
-            val testFrameworkEntry =
-                JarFile(jarFile).use { jar ->
-                    jar
-                        .entries()
-                        .asSequence()
-                        .map { it.name }
-                        .firstOrNull { it.startsWith("org/junit/") || it.startsWith("kotlin/test/") }
-                }
-            val toml =
+            // One pass over the jar: the metadata text, and the first test-framework entry (test frameworks are
+            // test-only dependencies and must never be packed into the mod jar; checked at the end of this action).
+            val (toml, testFrameworkEntry) =
                 JarFile(jarFile).use { jar ->
                     val entry =
                         jar.getJarEntry("META-INF/neoforge.mods.toml")
                             ?: throw GradleException("${jarFile.name} contains no META-INF/neoforge.mods.toml")
-                    jar.getInputStream(entry).bufferedReader().readText()
+                    val text = jar.getInputStream(entry).bufferedReader().readText()
+                    val frameworkEntry =
+                        jar
+                            .entries()
+                            .asSequence()
+                            .map { it.name }
+                            .firstOrNull { it.startsWith("org/junit/") || it.startsWith("kotlin/test/") }
+                    text to frameworkEntry
                 }
             val constantModId =
                 Regex("""const val MOD_ID\s*=\s*"([^"]*)"""")
