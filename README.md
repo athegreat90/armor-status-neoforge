@@ -4,7 +4,7 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 
 > **Unofficial.** This project is not affiliated with, endorsed by, or an official release of [ShirjeelPlays](https://github.com/ShirjeelPlays/Armor-Status), the author of the Fabric mod [Armor Status](https://modrinth.com/mod/armor-status) that inspired it. It is an independent, clean-room reimplementation. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-**Status:** version 0.1.0 is released on GitHub (see the Releases page). The Modrinth project exists but its page was not public yet when this was written; check the project for its current state. The weapon durability tooltip described below is on `main` and is not part of 0.1.0.
+**Status:** current version 0.2.0. It adds the weapon durability tooltip described below; version 0.1.0 had the armor HUD only. Downloads are on the GitHub Releases page. The Modrinth project exists but its page was not public yet when this was written; check the project for its current state.
 
 ## Features
 
@@ -115,7 +115,7 @@ These keys are in the `[weaponTooltip]` section of `config/armorstatusneoforge-c
 | `warningThresholdPercent` | `15` | `1` to `99`; displayed percent at or below which the line is low |
 | `includeAxes` | `true` | `true`, `false` |
 
-The remaining durability is always shown, so the line never reads as just a percent. A 0.1.0 config file keeps its armor values; NeoForge adds the new section and logs its normal `Correcting` line (checked on Minecraft 26.2).
+The remaining durability is always shown, so the line never reads as just a percent. An existing 0.1.0 config file keeps its armor values; NeoForge adds the new section and logs its normal `Correcting` line (checked on Minecraft 26.2).
 
 ### Weapon tooltip limitations
 
@@ -124,7 +124,9 @@ The remaining durability is always shown, so the line never reads as just a perc
 - A modded weapon that is in none of the standard tags and has neither spear component gets no line. Item include and exclude lists do not exist yet.
 - The creative menu hands out undamaged items, so every weapon there reads 100% unless `showUndamaged` is off.
 - Other tooltip mods build tooltips through the same path, so the line can also appear there; its position relative to other mods' lines is not controlled.
-- In-game checks so far: the line was seen under the name, in green, for a Trident on Minecraft 26.1.2 and a Netherite Axe on 26.3, and was reported seen on 26.2. Not checked in game: damaged weapons and the yellow, orange and red tiers, the other weapon types, the items that should get no line (pickaxe, shield and so on), the F3+H skip, the creative search skip, the section in the config screen, config changes while the game runs, a vanilla server with the tooltip, and the config upgrade from a real 0.1.0 file on 26.1.2 and 26.3 (the upgrade kept the 12 armor keys on 26.2).
+- Verified by a headless probe (2026-10-11): on a real dedicated dev server for each of Minecraft 26.1.2, 26.2 and 26.3 (the mod loaded on the server for the probe only, a NeoForge fake player, the real `ItemStack.getTooltipLines` firing the real `ItemTooltipEvent` into the real listener), 60 of 60 checks passed on each version with no mod errors. It covered the mapping from real stacks over the whole item registry (the same 25 damageable vanilla weapons on all three versions, no misclassification), the line text, tier colours and boundaries, the insertion under the item name, each weapon type, the items that get no line (pickaxe, shovel, hoe, armor, fishing rod, flint and steel, shears, shield, elytra, unbreakable item, empty stack), the skip for advanced tooltips (exactly one vanilla durability line) and for a missing player, and the effect of the `[weaponTooltip]` settings.
+- Seen on screen: the green undamaged line under the name for a Trident on Minecraft 26.1.2 and a Netherite Axe on 26.3, and a user report for 26.2. The probe does not prove rendering on screen or GUI hover behaviour beyond that.
+- Not checked: the on-screen colours of the damaged tiers, the creative menu search itself, the section in the config screen, config changes while the game runs (reload from the file), a vanilla server with the tooltip, and the config upgrade from a real 0.1.0 file on 26.1.2 and 26.3 (the upgrade kept the 12 armor keys on 26.2).
 
 ## Development
 
@@ -155,7 +157,7 @@ Run from the repository root. On Windows use `gradlew.bat`; on Linux and macOS u
 
 > **PowerShell quoting:** always quote `-PmcVersion`. Unquoted, PowerShell splits `-PmcVersion=26.2` at the dot and Gradle receives `26`.
 
-Valid `mcVersion` values are the file names in `gradle/mc/` (`26.1.2`, `26.2`, `26.3`). Any other value fails fast with the list of available versions. Jars are written to `neoforge/build/libs/armor-status-neoforge-<version>+mc<minecraft>.jar`.
+Valid `mcVersion` values are the file names in `gradle/mc/` (`26.1.2`, `26.2`, `26.3`). Any other value fails fast with the list of available versions. Jars are written to `neoforge/build/libs/armor-status-neoforge-<version>+mc<minecraft>.jar`, for example `armor-status-neoforge-0.2.0+mc26.2.jar`.
 
 ### Module layout
 
@@ -188,10 +190,9 @@ NeoForge-bound code, including the tooltip listener and the stack-to-signals map
 - Minecraft 26.3 builds against a NeoForge beta; there is no stable NeoForge 26.3 build.
 - The config screen shows enum values by their raw names (for example `MIDDLE_LEFT`), not translated labels.
 - Joining a vanilla Minecraft 26.2 server with the mod installed works (checked in the logs). Vanilla 26.1.2 and 26.3 servers have not been tried, and the HUD was not checked on screen on a vanilla server.
-- The weapon tooltip has been seen in game only on a Trident (26.1.2) and a Netherite Axe (26.3), both undamaged, plus a user report for 26.2 (see [Weapon tooltip limitations](#weapon-tooltip-limitations)). Damaged weapons, the colour tiers other than green, the other weapon types, the F3+H and creative search skips, the config screen section, live config changes and a vanilla server with the tooltip have not been checked.
+- The weapon tooltip logic was verified by a headless probe on all three versions, but it was seen on screen only as the green undamaged line on a Trident (26.1.2) and a Netherite Axe (26.3), plus a user report for 26.2 (see [Weapon tooltip limitations](#weapon-tooltip-limitations)). The on-screen colours of the damaged tiers, the creative search itself, the config screen section, live config changes and a vanilla server with the tooltip have not been checked.
 - Like the original mod, there is no offhand handling and no special handling for elytra beyond the chest slot.
 - The config screen has not been opened in a recorded test.
-- The weapon durability tooltip is not released yet; it is on `main` only, so the 0.1.0 files do not contain it.
 
 ## Credits
 
