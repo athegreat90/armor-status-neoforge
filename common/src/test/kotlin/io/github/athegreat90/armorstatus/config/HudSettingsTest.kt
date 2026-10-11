@@ -1,5 +1,6 @@
 package io.github.athegreat90.armorstatus.config
 
+import io.github.athegreat90.armorstatus.display.ColorScheme
 import io.github.athegreat90.armorstatus.display.DurabilityDisplayMode
 import io.github.athegreat90.armorstatus.layout.HudAnchor
 import io.github.athegreat90.armorstatus.model.ArmorSlot
@@ -304,6 +305,83 @@ class HudSettingsTest {
     fun `every anchor can be the debug anchor`(anchor: HudAnchor) {
         val settings = HudSettings.Default.copy(debugScreenAnchor = anchor)
         assertEquals(anchor, settings.effectiveAnchor(debugScreenOpen = true))
+    }
+
+    @Test
+    fun `the weapon tooltip settings default to the weapon tooltip defaults`() {
+        assertEquals(WeaponTooltipSettings.Default, HudSettings().weaponTooltip)
+        assertEquals(WeaponTooltipSettings.Default, HudSettings.Default.weaponTooltip)
+    }
+
+    @Test
+    fun `the legacy sanitized argument list yields default weapon tooltip settings and unchanged armor fields`() {
+        val legacy =
+            HudSettings.sanitized(
+                enabled = false,
+                anchorName = "TOP_RIGHT",
+                scale = 1.5,
+                showHead = false,
+                showChest = true,
+                showLegs = false,
+                showFeet = true,
+                displayModeName = "PERCENT",
+                gradientColors = true,
+                debugScreenModeName = "KEEP",
+                debugScreenScale = 0.4,
+                debugScreenAnchorName = "TOP_LEFT",
+            )
+        assertEquals(WeaponTooltipSettings.Default, legacy.weaponTooltip)
+        assertEquals(
+            HudSettings(
+                enabled = false,
+                anchor = HudAnchor.TOP_RIGHT,
+                scale = 1.5f,
+                showHead = false,
+                showChest = true,
+                showLegs = false,
+                showFeet = true,
+                displayMode = DurabilityDisplayMode.PERCENT,
+                gradientColors = true,
+                debugScreenMode = DebugScreenMode.KEEP,
+                debugScreenScale = 0.4f,
+                debugScreenAnchor = HudAnchor.TOP_LEFT,
+            ),
+            legacy,
+        )
+    }
+
+    @Test
+    fun `the shortest legacy sanitized call also keeps the weapon tooltip defaults`() {
+        val result = sanitized()
+        assertEquals(WeaponTooltipSettings.Default, result.weaponTooltip)
+    }
+
+    @Test
+    fun `a custom weapon tooltip is carried through sanitized untouched`() {
+        val custom =
+            WeaponTooltipSettings(enabled = false, colorScheme = ColorScheme.WHITE, warningThresholdPercent = 40)
+        val result =
+            HudSettings.sanitized(
+                enabled = true,
+                anchorName = "MIDDLE_LEFT",
+                scale = 1.0,
+                showHead = true,
+                showChest = true,
+                showLegs = true,
+                showFeet = true,
+                displayModeName = "RAW",
+                gradientColors = false,
+                weaponTooltip = custom,
+            )
+        assertEquals(custom, result.weaponTooltip)
+        assertEquals(HudSettings.Default.copy(weaponTooltip = custom), result)
+    }
+
+    @Test
+    fun `changing the weapon tooltip leaves the armor settings alone`() {
+        val changed = HudSettings.Default.copy(weaponTooltip = WeaponTooltipSettings(enabled = false))
+        assertEquals(HudSettings.Default, changed.copy(weaponTooltip = WeaponTooltipSettings.Default))
+        ArmorSlot.entries.forEach { assertTrue(changed.shows(it), "$it") }
     }
 
     @Test
