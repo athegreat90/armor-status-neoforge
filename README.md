@@ -59,13 +59,13 @@ NeoForge corrects invalid values in the file: numbers are clamped to the nearest
 
 ## Development
 
-The project can live in any directory; the build does not depend on an absolute path. The author's local checkout is `C:\Users\alexa\Documents\GitRepo\armor-status-neoforge`.
+The project can live in any directory; the build does not depend on an absolute path. Commands below are run from the repository root.
 
 ### Prerequisites
 
 - JDK 25.
 - Network access on first build. Gradle downloads a JDK 21 through the Foojay toolchain resolver, because ModDevGradle's asset download task needs a Java 21 launcher.
-- The Gradle wrapper (9.2.1) is committed; do not use a locally installed Gradle.
+- The Gradle wrapper (9.8.1) is committed; do not use a locally installed Gradle.
 
 ### Commands
 

@@ -6,7 +6,7 @@ Durable rules for Claude Code in this repository. Project state, versions and hi
 
 ## Repository
 
-- Native Windows path: `C:\Users\alexa\Documents\GitRepo\armor-status-neoforge`. WSL form: `/mnt/c/Users/alexa/Documents/GitRepo/armor-status-neoforge`. The build uses no absolute paths.
+- The repository can live in any directory (native Windows or WSL); the build uses no absolute paths, so docs and commands refer to the repository root. Do not write machine-specific absolute paths into the repository.
 - Shell is PowerShell on Windows 11. Use `gradlew.bat`. **Quote `"-PmcVersion=26.2"`**: unquoted, PowerShell splits at the dot.
 - Goal: a client-only NeoForge mod (Kotlin, KotlinLangForge) that shows armor durability on the HUD, for Minecraft 26.1.2, 26.2 and 26.3. Unofficial, clean-room inspired by ShirjeelPlays' Armor Status.
 - Modules: `common` (pure Kotlin, zero Minecraft dependency) and `neoforge` (adapter). Pure decisions go in `common`.
@@ -48,7 +48,7 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 ## Toolchain
 
 - Java 25 for the project. Gradle also needs a JDK 21 launcher for ModDevGradle's `downloadAssets`; the Foojay resolver (`1.0.0`) downloads it.
-- Gradle wrapper **9.2.1**, pinned with `distributionSha256Sum`. Kotlin Gradle Plugin 2.4.21 documents support up to Gradle 9.7.0. Bump only after a verified build on all targets.
+- Gradle wrapper **9.8.1**, pinned with `distributionSha256Sum` (version, type and checksum live in `tasks.wrapper` in the root `build.gradle.kts`; run `wrapper` twice after changing them). Kotlin Gradle Plugin 2.4.21 documents support up to Gradle 9.7.0, so 9.8.1 is outside the documented range; fallback 9.7.1. Bump only after a verified build on all targets.
 - Formatting: Spotless with ktlint 1.8.0, `ktlint_official`, 120 columns (`.editorconfig`). Run `spotlessApply`, then `check`.
 
 ## Minecraft version compatibility

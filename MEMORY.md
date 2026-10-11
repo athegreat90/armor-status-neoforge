@@ -47,7 +47,7 @@ Summary (details in `.claude/rules/kotlin.md`, condensed in `CLAUDE.md`): immuta
 | Kotlin / Kotlin Gradle Plugin | 2.4.21 |
 | KotlinLangForge | `2.15.0-k2.4.21-3.1+neoforge` (repo `https://repo.nyon.dev/releases`) |
 | ModDevGradle (`net.neoforged.moddev`) | 2.0.148 |
-| Gradle wrapper | 9.2.1 (checksum pinned; KGP 2.4.21 documents support up to 9.7.0) |
+| Gradle wrapper | 9.8.1 (checksum pinned; previous 9.2.1). Evidence: scratch trial 2026-10-11 on 26.1.2, 26.2 and 26.3, plus the verification run before the merge (commands, hashes and results are in `odd/tasks/gradle-junit-weapon-tooltip.md`). Caveat: KGP 2.4.21 documents support up to Gradle 9.7.0, so 9.8.1 is outside the documented range. Fallback: 9.7.1 (sha256 `acd53f1e...f804d20a`, not run) |
 | Java | 25 (JDK 21 auto-downloaded for MDG asset tasks) |
 | Spotless plugin / ktlint | 8.10.4 / 1.8.0 |
 | JUnit BOM | 6.1.3 (plus `kotlin-test` 2.4.21) |
@@ -138,7 +138,7 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 - Private repository `athegreat90/armor-status-neoforge` exists (visibility verified `PRIVATE` on 2026-10-10). `main` holds the full history up to the merge of PR #1 (`3c2e81e`); feature branches are merged and no longer needed.
 - `ci.yml` exists: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3 (`fail-fast: false`); Temurin 25; `spotlessCheck`, `:common:test`, `check build "-PmcVersion=<v>"`, jar upload (test reports on failure); actions pinned by full SHA (checkout v7.0.1, setup-java v6.0.1, gradle/actions v6.4.0, upload-artifact v7.0.2); `permissions: contents: read`; concurrency cancel.
 - First run on PR #1 (run 38059858897, 2026-10-10): all three jobs green, jars uploaded (about 53 KB each, nothing shaded). This confirmed Temurin 25 resolves on `ubuntu-latest` and that the Foojay JDK 21 download works on the runner. The `gradlew` executable bit had to be set in the git index (`100755`) because it is committed from Windows.
-- Runner annotations to act on later: Gradle 9.2.1 is flagged "out of date" and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
+- Runner annotations: Gradle 9.2.1 was flagged "out of date" (addressed by the 9.8.1 upgrade; the CI result is recorded once the pull request has run) and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
 - CI on `main` after the merge (run 38064670429, `3c2e81e`): all three jobs green.
 - `release.yml` is on `main` now but has NEVER run. Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
 - Local proof (2026-10-10): `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` succeeds without a token and prints the planned payload; Minotaur debug mode makes two read-only GETs to api.modrinth.com. A real upload requires `MODRINTH_TOKEN` in the environment, `MODRINTH_PROJECT_ID` and `-PmodrinthDryRun=false`.
@@ -147,7 +147,7 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 
 ## Local development
 
-- Windows path `C:\Users\alexa\Documents\GitRepo\armor-status-neoforge`; WSL path `/mnt/c/Users/alexa/Documents/GitRepo/armor-status-neoforge`.
+- Work from the repository root, on native Windows (PowerShell) or WSL; no absolute path is needed.
 - Commands (PowerShell, from the repo root; quote `-PmcVersion`):
 
 ```powershell
