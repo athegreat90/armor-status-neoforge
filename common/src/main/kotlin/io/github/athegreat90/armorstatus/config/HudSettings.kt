@@ -26,6 +26,10 @@ private const val DEFAULT_DEBUG_SCALE: Float = 0.6f
  * Defaults reproduce the upstream mod's look: enabled, middle left, scale 1.0, every slot shown,
  * raw durability numbers in white. [debugScreenMode], [debugScreenScale] and [debugScreenAnchor] keep the HUD out of
  * the way of the F3 debug text; see [effectiveScale] and [effectiveAnchor].
+ *
+ * [weaponTooltip] holds the separate settings of the weapon durability line in the item tooltip. It is the last
+ * parameter with a default, so every existing construction keeps compiling and gets the tooltip defaults, and none of
+ * the armor HUD behaviour reads it.
  */
 data class HudSettings(
     val enabled: Boolean = true,
@@ -40,6 +44,7 @@ data class HudSettings(
     val debugScreenMode: DebugScreenMode = DebugScreenMode.COMPACT,
     val debugScreenScale: Float = DEFAULT_DEBUG_SCALE,
     val debugScreenAnchor: HudAnchor = HudAnchor.BOTTOM_RIGHT,
+    val weaponTooltip: WeaponTooltipSettings = WeaponTooltipSettings(),
 ) {
     init {
         require(scale in MIN_SCALE..MAX_SCALE) { "scale must be in $MIN_SCALE..$MAX_SCALE, was $scale" }
@@ -55,7 +60,8 @@ data class HudSettings(
          * Lenient factory for raw config values. Never throws: [scale] is coerced into
          * [MIN_SCALE]..[MAX_SCALE] and [debugScreenScale] into [MIN_DEBUG_SCALE]..[MAX_DEBUG_SCALE] (`NaN` becomes
          * the default), and an unknown or missing enum name falls back to its default. Names are matched ignoring
-         * case and surrounding whitespace.
+         * case and surrounding whitespace. [weaponTooltip] is taken as given; build it with
+         * [WeaponTooltipSettings.sanitized] when it comes from raw config values.
          */
         fun sanitized(
             enabled: Boolean,
@@ -70,6 +76,7 @@ data class HudSettings(
             debugScreenModeName: String? = null,
             debugScreenScale: Double = Default.debugScreenScale.toDouble(),
             debugScreenAnchorName: String? = null,
+            weaponTooltip: WeaponTooltipSettings = WeaponTooltipSettings(),
         ): HudSettings =
             HudSettings(
                 enabled = enabled,
@@ -90,6 +97,7 @@ data class HudSettings(
                         MAX_DEBUG_SCALE,
                     ),
                 debugScreenAnchor = parseEnum(debugScreenAnchorName, Default.debugScreenAnchor),
+                weaponTooltip = weaponTooltip,
             )
 
         private fun coerceScale(
