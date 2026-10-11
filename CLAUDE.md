@@ -65,7 +65,8 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 
 ## Testing
 
-- Pure logic in `common`: write the failing test first (RED), then implement (GREEN), then refactor. JUnit 5 + kotlin-test, parameterized tests, immutable fixtures.
+- Pure logic in `common`: write the failing test first (RED), then implement (GREEN), then refactor. JUnit Jupiter 6.1.3 + kotlin-test, parameterized tests, immutable fixtures.
+- `verifyTestResults` (runs after `test`, part of `check`) fails on zero executed tests, any skipped test, or a `*Test.kt` without results, so every test class must produce results. CI uploads the test reports always and prints a summary; `verifyModMetadata` rejects `org/junit/` and `kotlin/test/` entries in the jar.
 - Exception: NeoForge-bound code has no unit-test harness. Prove it by compiling all three targets, `check`, and `runClient`. Say so in the commit or `MEMORY.md`.
 - Never report unit tests as runtime verification. Record what was run, with date and outcome, in `MEMORY.md`.
 

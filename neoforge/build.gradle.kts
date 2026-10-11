@@ -145,6 +145,14 @@ val verifyModMetadata =
 
         doLast {
             val jarFile = modJar.get().asFile
+            val testFrameworkEntry =
+                JarFile(jarFile).use { jar ->
+                    jar
+                        .entries()
+                        .asSequence()
+                        .map { it.name }
+                        .firstOrNull { it.startsWith("org/junit/") || it.startsWith("kotlin/test/") }
+                }
             val toml =
                 JarFile(jarFile).use { jar ->
                     val entry =
@@ -200,6 +208,8 @@ val verifyModMetadata =
                 expect("side of dependency '${dep.tomlString("modId")}'", dep.tomlString("side"), "CLIENT")
             }
             Regex("""\$\{[^}]*}""").findAll(toml).forEach { problems += "unexpanded placeholder: ${it.value}" }
+            // Test frameworks are test-only dependencies; they must never be packed into the mod jar.
+            if (testFrameworkEntry != null) problems += "jar contains test-framework classes: $testFrameworkEntry"
 
             if (problems.isNotEmpty()) {
                 val title = "${jarFile.name}: neoforge.mods.toml is invalid:"
