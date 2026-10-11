@@ -4,10 +4,11 @@ Version-controlled project memory. Update at each milestone. Every result below 
 
 ## Project overview
 
-- Client-only NeoForge mod in Kotlin that shows worn armor durability (item icon + number) on the HUD. Targets Minecraft 26.1.2, 26.2 and 26.3, Java 25, language provider KotlinLangForge (KLF).
+- Client-only NeoForge mod in Kotlin that shows worn armor durability (item icon + number) on the HUD and weapon durability in the item hover tooltip. Targets Minecraft 26.1.2, 26.2 and 26.3, Java 25, language provider KotlinLangForge (KLF).
 - Unofficial, clean-room reimplementation inspired by ShirjeelPlays' Fabric mod Armor Status. Our code is MIT. See `ATTRIBUTION.md`.
 - Mod id `armorstatusneoforge`, group `io.github.athegreat90`, version `0.1.0`, author `athegreat90`.
-- Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The private repository `athegreat90/armor-status-neoforge` exists and CI is green on `main`. A private Modrinth project exists, but no release or tag does; T11 (going public and publishing) awaits explicit user approval.
+- Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The repository `athegreat90/armor-status-neoforge` was private at that time and CI was green on `main`. (Later the same day it was made public and `v0.1.0` was released, see the 2026-10-11 notes below and "CI/CD".)
+- Status on 2026-10-11: the maintenance and feature work recorded in `odd/tasks/gradle-junit-weapon-tooltip.md` is merged to `main` through PRs #8 to #11 (Gradle 9.8.1, JUnit 6 test hardening, shared durability helpers and weapon domain, weapon tooltip adapter and config). The documentation (T7) is a separate pull request, and in-game verification (T6) is only partial, see "Known issues". Nothing is released or published by this work, the mod version is still `0.1.0`, and the next release version is undecided (0.2.0 is suggested).
 
 ## Architecture decisions
 
@@ -24,8 +25,17 @@ Version-controlled project memory. Update at each milestone. Every result below 
 | Enum config values shown by literal name | `common` has no Minecraft dependency, so it cannot implement `TranslatableEnum`. |
 | Metadata templated from `gradle.properties` and `gradle/mc/*.properties`, verified by `verifyModMetadata` | Catches wrong loader, drifted mod id, stale range, unexpanded placeholders at build time. |
 | Spotless applied at the root project only | One `spotlessCheck` for both modules. Detekt not added (the plan notes detekt 1.x does not work on JDK 25; not re-tested). |
+| Weapon durability in the hover tooltip only, no weapon rows on the HUD | User decision (2026-10-11). The cursor is locked in normal play, so nothing about weapons is drawn there. The armor HUD is unchanged. Always-on weapon HUD rows are built only if the user asks. |
+| `ItemTooltipEvent` listener on `NeoForge.EVENT_BUS`, line inserted at index 1 | Same event and call on 26.1.2, 26.2 and 26.3, so no per-version overlay. Index 1 puts the line right under the item name. |
+| Skip rules: advanced tooltips (F3+H) and `event.entity == null` | Vanilla prints its own `Durability: x / y` in advanced mode, so ours would be a second line. A null player means the creative-menu search index is being built for every item; a line then would make every weapon match a search such as "durability". |
+| Adapter builds `WeaponSignals` (a `@JvmInline value class` bitmask), `common` decides in `classifyWeapon` | Keeps the decision pure and unit-tested and the adapter free of allocation; the stack-to-signals mapping itself is not unit tested. |
+| `DataComponents.WEAPON` is not a signal | Pickaxes, shovels and hoes carry it too. Spears are caught by `KINETIC_WEAPON`/`PIERCING_WEAPON` and the tags. |
+| `includeAxes` default `true`, and `AXE_TAG` is a weapon signal while axes are included | Many modded axes are tagged only `#minecraft:axes`; with the option off an axe is excluded unless it is also a sword or spear. |
+| No tooltip or classification cache | Tag sets are rebound on datapack reload, the listener can run off the render thread, and a cache would save less than vanilla's own per-frame tooltip allocation. Only state: a one-shot `@Volatile failed` flag. |
+| `ItemTooltipEvent.getDisplay()` is not used | It exists only on 26.2 and 26.3. Cost: a datapack item that hides only its damage component still gets the line. |
+| Shared helpers `percentRounded()`, `isLow`, `ColorScheme` | One displayed percent drives the text and the colour, so they cannot disagree. The armor HUD keeps its boolean `gradientColors`. |
 
-Documented mutable-state exceptions: `ActiveHudSettings` (`@Volatile` holder) and the render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays).
+Documented mutable-state exceptions: `ActiveHudSettings` (`@Volatile` holder), the render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays) and the one-shot `@Volatile failed` flag in `WeaponTooltip`.
 
 Open decision: `isFatal()` treats `LinkageError` as fatal, so a jar loaded on the wrong Minecraft version would crash instead of disabling the HUD. Kept as specified; the `minecraft` version range already blocks wrong-version loads. Revisit only if the user asks.
 
@@ -47,10 +57,10 @@ Summary (details in `.claude/rules/kotlin.md`, condensed in `CLAUDE.md`): immuta
 | Kotlin / Kotlin Gradle Plugin | 2.4.21 |
 | KotlinLangForge | `2.15.0-k2.4.21-3.1+neoforge` (repo `https://repo.nyon.dev/releases`) |
 | ModDevGradle (`net.neoforged.moddev`) | 2.0.148 |
-| Gradle wrapper | 9.8.1 (checksum pinned; previous 9.2.1). Evidence: scratch trial 2026-10-11 on 26.1.2, 26.2 and 26.3, plus the verification run before the merge (commands, hashes and results are in `odd/tasks/gradle-junit-weapon-tooltip.md`). Caveat: KGP 2.4.21 documents support up to Gradle 9.7.0, so 9.8.1 is outside the documented range. Fallback: 9.7.1 (sha256 `acd53f1e...f804d20a`, not run) |
+| Gradle wrapper | previous 9.2.1, selected 9.8.1 (checksum pinned; PR #8, merge commit `68b92a4`). Evidence: scratch trial 2026-10-11 on 26.1.2, 26.2 and 26.3, plus the verification run before the merge and CI green on PR #8 to #11 (commands, hashes and results are in `odd/tasks/gradle-junit-weapon-tooltip.md`). Caveat: KGP 2.4.21 documents support up to Gradle 9.7.0, so 9.8.1 is outside the documented range. Fallback: 9.7.1 (sha256 `acd53f1e...f804d20a`, not run) |
 | Java | 25 (JDK 21 auto-downloaded for MDG asset tasks) |
 | Spotless plugin / ktlint | 8.10.4 / 1.8.0 |
-| JUnit BOM | 6.1.3 (plus `kotlin-test` 2.4.21) |
+| JUnit BOM | previous 6.1.3, selected 6.1.3 (no version change; plus `kotlin-test` 2.4.21). `common` now depends on the `junit-jupiter` aggregator explicitly (API, params and engine at the BOM version) instead of `junit-jupiter-params` alone; `junit-platform-launcher` stays `testRuntimeOnly` |
 | Foojay toolchain resolver | 1.0.0 |
 | `loaderVersion` | `[1,)` (`[3,)` was rejected: KLF reports 2.15.0) |
 
@@ -70,6 +80,16 @@ Fabric (upstream) to NeoForge (ours):
 
 Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEntries.isOverlayVisible()` is true (`KeyboardHandler` calls `toggleDebugOverlay()`); the declaration is identical on 26.1.2, 26.2 and 26.3, so it lives in `neoforge/src/main`, not in an overlay. `DebugScreenOverlay#showDebugScreen()` is not used: it is also true for "always on" entries (performance profile FPS line) and copies a list per call. Hide-GUI is `Options#hideGui` on 26.1.x and `gui.hud.isHidden()` on 26.2 and 26.3. Mod-list icon keys: NeoForge 26.2 and 26.3 read `iconFile`/`iconBlur` (and `bannerFile`) and log a startup warning for the deprecated `logoFile` (`LogoFileWarningsHandler`); NeoForge 26.1.2 only knows `logoFile`/`logoBlur`. The keys come from `mod_icon_file_key`/`mod_icon_blur_key` in `gradle/mc/*.properties`, and `verifyModMetadata` rejects `logoFile` on 26.2 and 26.3. Constructor injection needs a class, not an `object`. NeoForge corrects invalid config values itself (clamp numbers, reset bad enums and booleans) before our code reads them.
 
+Weapon tooltip specifics (read from the 26.1.2, 26.2 and 26.3 jars, then compiled on all three): `ItemTooltipEvent` (`net.neoforged.neoforge.event.entity.player`, game bus, not cancelable, mutable `getToolTip()`), `event.flags.isAdvanced`, `event.entity` (nullable), the tags `Tags.Items.MELEE_WEAPON_TOOLS`, `RANGED_WEAPON_TOOLS`, `TOOLS_BOW`, `TOOLS_CROSSBOW`, `ItemTags.SWORDS`, `AXES`, `SPEARS` and the `*_ENCHANTABLE` tags, and `DataComponents.KINETIC_WEAPON`/`PIERCING_WEAPON` are identical on the three targets, so the tooltip needs no overlay. `ItemTooltipEvent.getDisplay()` exists only on 26.2 and 26.3 and is not used. 26.3 renames `SWING_ANIMATION` to `ATTACK_ANIMATION`, which is unused here. `ItemStack.is(TagKey)` throws when tags are unbound, which is one more reason the listener returns early when `event.entity == null`. Vanilla adds its own `Durability: x / y` line only in advanced mode, and the in-game hotbar item-name popup does not build a tooltip, so it is not covered.
+
+### Build migration problems and solutions
+
+- Gradle 9.8.1 wrapper: `tasks.wrapper` in the root `build.gradle.kts` pinned 9.2.1, which would silently downgrade a re-run of the wrapper task, so it now pins 9.8.1, BIN and the checksum; run `wrapper` twice after changing them. The `gradle-wrapper.jar` on `main` already was Gradle's official 9.8.1 wrapper jar (sha256 matched the published checksum).
+- KGP 2.4.21 documents Gradle only up to 9.7.0. 9.8.1 passed every check and CI, but it stays outside the documented range; fallback 9.7.1.
+- Minotaur 2.10.0 (the newest) prints "Invocation of Task.project at execution time has been deprecated ... fail with an error in Gradle 10" on the `modrinth` dry run. It appears the same on `main` with Gradle 9.2.1, so it is pre-existing and upstream, not caused by the upgrade. The message says it will fail in Gradle 10, so Minotaur needs an upstream fix before that upgrade.
+- Jar bytes depend on the compile mode, not only on the build cache: incremental builds and a clean build differ by about 42 bytes (`Intrinsics.checkNotNullExpressionValue` for a Java platform type in `ActiveHudSettings.class`), the same difference seen between CI and a local 26.3 build. Compare jar hashes only after `clean`, and only on one machine.
+- A filtered test run (`--tests`) would fail the per-class completeness check of `verifyTestResults`, so that check is skipped when a filter is active (detected through the public start-parameter route; `commandLineIncludePatterns` is internal and did not compile).
+
 ## Progress
 
 - 2026-10-10: T1 scaffold, T2 spike (KLF loads on all three), T3 `common` domain, T4 client config, T5 HUD layer, T6 three-version runs, T7 Spotless/ktlint + metadata verification + wrapper checksum: done locally. Native reviews approved with only advisory findings.
@@ -79,7 +99,17 @@ Version specifics learned: the F3 pane is shown exactly while `Minecraft#debugEn
 - T9 CI and private remote: done; CI green on PR #1 and on `main`.
 - T10 release workflow and Minotaur dry run: written and dry-run locally; the workflow itself has not run on GitHub.
 - PR #1 merged (merge commit `3c2e81e`, 2026-10-10); CI on `main` green on all three targets (run 38064670429). The dev server used for testing was stopped.
-- T11: stop and wait for explicit user approval before going public, tagging or publishing. A draft Modrinth summary and description were written for the user; nothing was published.
+- T11: stop and wait for explicit user approval before going public, tagging or publishing. That approval was given on 2026-10-11 (see the next entry); a draft Modrinth summary and description were written for the user.
+- 2026-10-11 release of 0.1.0 (user-approved): the history was scanned first (31 commits, no tokens, keys, `.env`, run or log files); the repository was made public (visibility verified `PUBLIC`); tag `v0.1.0` was created on `main` (`fcea2d4`) and `release.yml` ran for real (run 38093814088): Validate, the three builds, GitHub Release, the three Modrinth jobs and Summary all succeeded. The GitHub Release `v0.1.0` is published (not a draft) with three jars (`+mc26.1.2` 66012 B, `+mc26.2` 66100 B, `+mc26.3` 66104 B). The three Modrinth uploads ran without errors, so the token works; the Modrinth versions themselves were not looked at because the project is a draft (the public API answers 404). Completing the Modrinth page (summary, description, license, links, icon, gallery) and submitting it for review is the maintainer's step.
+- 2026-10-11 feature `gradle-junit-weapon-tooltip` (task file `odd/tasks/gradle-junit-weapon-tooltip.md`, stacked small PRs to `main`, each with CI green on 26.1.2, 26.2 and 26.3):
+  - T0 baseline and tooltip spike (no commit): baseline `check build` per version, then a throwaway listener compiled unchanged on all three.
+  - T1 Gradle 9.8.1: PR #8, merge commit `68b92a4`.
+  - T2 JUnit 6 hardening (`verifyTestResults`, jar guard, always-uploaded reports, CI test summary): PR #9, merge commit `097bf3a`.
+  - T3 and T4 shared durability helpers and the weapon domain in `common`, test-first: PR #10, merge commit `ac4040d`.
+  - T5 tooltip adapter and `[weaponTooltip]` config: PR #11, merge commit `d897df2`.
+  - T6 in-game verification: partial, see "Test results" and "Known issues".
+  - T7 documentation (README, CHANGELOG `[Unreleased]`, CLAUDE.md, this file, `.claude/rules/*`): a separate documentation pull request.
+  - T8 (include/exclude item lists, weapon HUD rows, detekt spike, version catalog, configuration cache) is optional and only if asked.
 
 ## Test results
 
@@ -87,7 +117,7 @@ All on native Windows 11, JDK 25.0.2, 2026-10-10.
 
 | Check | Command | Outcome |
 |---|---|---|
-| Unit tests | `.\gradlew.bat :common:test --rerun-tasks` | 313 tests, 0 skipped, 0 failures (XML sum, 2026-10-10 after the F3 position follow-up) |
+| Unit tests | `.\gradlew.bat :common:test --rerun-tasks` | 313 tests, 0 skipped, 0 failures (XML sum, 2026-10-10 after the F3 position follow-up; history, superseded by the weapon work below) |
 | Format + metadata + build | `.\gradlew.bat check "-PmcVersion=<v>"` and `build` for 26.1.2, 26.2, 26.3 | BUILD SUCCESSFUL each, no Kotlin warnings |
 | Dev client | `runClient` on 26.1.2, 26.2, 26.3 with a test datapack and a save loaded through `quickPlay` | Render path reached, 0 `ERROR`/`Exception` lines, live config edit reloaded |
 | Wrapper checksum | Fresh `GRADLE_USER_HOME` with the real and a wrong `distributionSha256Sum` | Right sum accepted, wrong sum rejected |
@@ -95,7 +125,7 @@ All on native Windows 11, JDK 25.0.2, 2026-10-10.
 | `buildAll` failure path | Simulated compile error in an overlay | `buildAll` exits 1 and does not report success |
 | Dedicated server | `runServer` on 26.1.2 | Reached `Done`; mod not instantiated |
 
-JUnit hardening (2026-10-11, Gradle 9.8.1, JDK 25.0.2): `common` now depends on the `junit-jupiter` aggregator (BOM 6.1.3; `testRuntimeClasspath` resolves engine, params, API and launcher to 6.1.3, no JUnit 4 or Vintage), `tasks.test` sets `failOnNoDiscoveredTests = true`, `testLogging` and explicit XML/HTML reports, and the new `verifyTestResults` task (finalizer of `test`, part of `check`) fails on zero tests, any skipped test, any failure/error, or a `*Test.kt` without a result file or with 0 tests. Observed: `spotlessCheck` OK; `:common:test --rerun-tasks` = 313 tests, 0 failures, 0 errors, 0 skipped, 11 suites (XML sum) and `verifyTestResults` ran; negative demos in the working tree (file removed afterwards): a `@Disabled` test made `verifyTestResults` fail with "1 test(s) were skipped", a `*Test.kt` class without `@Test` methods failed with "test class ... has no result file ..." (Gradle itself did not complain), and with the file deleted the build passed again; in a scratch copy, making the jar-entry prefix match `io/github/athegreat90/` made `verifyModMetadata` fail with "jar contains test-framework classes: io/github/athegreat90/"; `check build` for 26.1.2, 26.2 and 26.3 and `buildAll` BUILD SUCCESSFUL with `--warning-mode all` (no warnings printed), no `org/junit` or `kotlin/test` entries in the three jars. CI `ci.yml` now uploads the reports always and writes a totals summary; the awk summary step was run locally against the real XML files (11 suites, 313 tests, 0/0/0) and the workflow parses with snakeyaml 2.6, but the new steps have not yet run on GitHub (UNVERIFIED until the pull request runs).
+JUnit hardening (2026-10-11, Gradle 9.8.1, JDK 25.0.2): `common` now depends on the `junit-jupiter` aggregator (BOM 6.1.3; `testRuntimeClasspath` resolves engine, params, API and launcher to 6.1.3, no JUnit 4 or Vintage), `tasks.test` sets `failOnNoDiscoveredTests = true`, `testLogging` and explicit XML/HTML reports, and the new `verifyTestResults` task (finalizer of `test`, part of `check`) fails on zero tests, any skipped test, any failure/error, or a `*Test.kt` without a result file or with 0 tests. Observed (before the weapon tests existed): `spotlessCheck` OK; `:common:test --rerun-tasks` = 313 tests, 0 failures, 0 errors, 0 skipped, 11 suites (XML sum) and `verifyTestResults` ran; negative demos in the working tree (file removed afterwards): a `@Disabled` test made `verifyTestResults` fail with "1 test(s) were skipped", a `*Test.kt` class without `@Test` methods failed with "test class ... has no result file ..." (Gradle itself did not complain), and with the file deleted the build passed again; in a scratch copy, making the jar-entry prefix match `io/github/athegreat90/` made `verifyModMetadata` fail with "jar contains test-framework classes: io/github/athegreat90/"; `check build` for 26.1.2, 26.2 and 26.3 and `buildAll` BUILD SUCCESSFUL with `--warning-mode all` (no warnings printed), no `org/junit` or `kotlin/test` entries in the three jars. CI `ci.yml` now uploads the reports always and writes a totals summary; the awk summary step was run locally against the real XML files (11 suites, 313 tests, 0/0/0) and the workflow parses with snakeyaml 2.6. The new CI steps then ran on GitHub: see the table below.
 
 F3 compact follow-up smoke (2026-10-10): `runClient "-PmcVersion=26.2" "-PquickPlay=TestWorld262"` reached the world. The stale `hideWhenDebugScreen` key in the local config was dropped by NeoForge (logged `Configuration file ... is not correct. Correcting`, no error) and the file gained `debugScreenMode = "COMPACT"` and `debugScreenScale = 0.6`. The settings log line shows both fields, live edits to `HIDE`, `KEEP` (restart) and back to `COMPACT`/`0.6` reloaded as logged, 0 `ERROR`/`Exception` lines. F3 itself was not pressed (compact behaviour UNVERIFIED on screen).
 
@@ -122,8 +152,40 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 
 **Not verified:** damaged and near-broken armor, empty slots, GUI scales 1 to 4, spectator, F1, all six anchors and `debugScreenMode = HIDE`/`KEEP` on screen, on any version (no recorded check); the mod-list icon and the config screen (not visible in the screenshots); the HUD on screen while connected to a vanilla server; joining vanilla 26.1.2 and 26.3 servers.
 
+### Gradle 9.8.1, JUnit hardening and weapon tooltip (2026-10-11)
+
+Native Windows 11, JDK 25.0.2, dates 2026-10-11. Every row was observed; details and hashes are in `odd/tasks/gradle-junit-weapon-tooltip.md`.
+
+| Check | Command | Outcome |
+|---|---|---|
+| Format | `.\gradlew.bat spotlessCheck` | OK at baseline and after T1, T3+T4 and T5 |
+| Unit tests | `.\gradlew.bat :common:test --rerun-tasks` | Baseline, T1 and T2: 313 tests in 11 suites, 0 skipped, 0 failed. After T3+T4 and again after T5: 533 tests in 16 suites, 0 skipped, 0 failed (313 existing, unchanged, plus 220 new) |
+| Build per version | `.\gradlew.bat check build "-PmcVersion=<v>"` for 26.1.2, 26.2, 26.3 | BUILD SUCCESSFUL on every version at baseline (Gradle 9.2.1), after T1, T2, T3+T4 and T5; no warnings other than Gradle's configuration-cache hint; no `org/junit` or `kotlin/test` entries in the jars |
+| All targets | `.\gradlew.bat buildAll` | OK after T1 and T2 |
+| Minotaur dry run | `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` | OK on Gradle 9.8.1 ("Modrinth DRY RUN"), with the upstream `Task.project` deprecation message |
+| Reproducible archives | two clean 26.2 rebuilds 4 s apart | identical bytes, also identical to the baseline jar |
+| CI per pull request | `ci.yml` on PR #8, #9, #10, #11 | Green on 26.1.2, 26.2 and 26.3 each. PR #8 runner log: "Welcome to Gradle 9.8.1!" and "All Gradle Wrapper jars are valid". PR #9: `verifyTestResults: 313 tests in 11 suites, 0 skipped, 0 failed`, the `Test summary` and `Upload test reports` steps succeeded and the artifacts `reports-mc26.1.2`, `reports-mc26.2`, `reports-mc26.3` exist |
+| `verifyTestResults` negative demos | a `@Disabled` test, a `*Test.kt` class without `@Test`, and in a scratch copy a jar-prefix match for the test-framework guard | Each failed with its specific message ("1 test(s) were skipped", "has no result file", "jar contains test-framework classes"); demos removed afterwards, the build passed again. A filtered `--tests "*ShouldRenderTest"` run passed (18 tests) with the per-class check skipped |
+| Mutation checks (T3+T4) | `isLow` `<=` changed to `<`; axe policy inverted | 15 and 7 tests failed respectively; both restored and the suite was green again. The axe-signal fix was made test-first (2 tests failed, then passed) |
+| Dev client smoke, Gradle 9.8.1 | `runClient "-PmcVersion=26.2" "-PquickPlay=TestWorld262"` | Mod loaded, player joined, no warnings or errors in the log |
+| Dev client smoke, config upgrade | same, with a 0.1.0-format config (T5 build) | Mod loaded; NeoForge logged its normal `Configuration file ... is not correct. Correcting` line; the 12 armor keys kept their values and order and the `[weaponTooltip]` section with defaults was added; no `weapon tooltip failed` line; checked on 26.2 only |
+
+In-game tooltip observations (dev server per version, `runClient ... "-PquickJoin=localhost:25565"`, the user driving the client, screenshots read afterwards; all client logs clean, no `ERROR`, `Exception`, `HUD failed` or `weapon tooltip failed`):
+
+- 26.1.2 (NeoForge 26.1.2.115): a Trident in the creative menu shows the green line `Durability: 250 / 250 (100%)` directly under the name; the armor HUD rows are still drawn.
+- 26.3 (NeoForge 26.3.0.64-beta): a Netherite Axe shows the green line `Durability: 2031 / 2031 (100%)` (so axes count by default); the armor HUD rows are still drawn.
+- 26.2: the user reported seeing the tooltip; there is no screenshot.
+- Limits: all observed items were undamaged, so only the green tier was seen; one weapon per version at most; the creative menu hands out undamaged items.
+
 ## Known issues
 
+- Weapon tooltip, NOT verified in game: damaged weapons and the yellow, orange and red tiers; the other weapon types (sword, bow, crossbow, mace, spear); the items that should get no line (pickaxe, shovel, hoe, fishing rod, shield, armor, unbreakable item); the advanced-tooltip (F3+H) skip; the creative-menu search skip; the `[weaponTooltip]` section in the config screen; config changes taking effect while the game runs; `showUndamaged` off; a vanilla-server join with the tooltip; the config upgrade from a real 0.1.0 file on 26.1.2 and 26.3 (only 26.2 was checked).
+- Tooltip text is English only (`en_us.json`); other languages fall back to it.
+- A datapack item that hides only its damage component from the tooltip still gets the line, because `getDisplay()` is not read.
+- A modded weapon that is in none of the standard tags and has no spear component gets no line; there are no include or exclude lists yet.
+- In the creative menu every weapon is undamaged, so each reads 100% unless `showUndamaged` is off. Other tooltip mods can show the line too, and its position relative to their lines is not controlled.
+- The Minotaur `Task.project` deprecation (Gradle 10) comes from Minotaur 2.10.0, not from this repository.
+- Gradle 9.8.1 is outside KGP 2.4.21's documented range (up to 9.7.0).
 - The default layout and the F3 compact layout were checked on screen on 26.1.2, 26.2 and 26.3. The rest of the manual checklist is pending, see "Manual verification".
 - 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
 - Config screen shows raw enum names.
@@ -137,12 +199,14 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 
 ## CI/CD
 
-- Private repository `athegreat90/armor-status-neoforge` exists (visibility verified `PRIVATE` on 2026-10-10). `main` holds the full history up to the merge of PR #1 (`3c2e81e`); feature branches are merged and no longer needed.
+- Repository `athegreat90/armor-status-neoforge` is public (verified `PUBLIC` on 2026-10-11; it was private before). `main` holds the full history up to the merge of PR #1 (`3c2e81e`) and, since 2026-10-11, PRs #8 to #11 (last merge commit `d897df2`); merged feature branches are no longer needed.
 - `ci.yml` exists: push to main, pull requests, manual dispatch; matrix over 26.1.2, 26.2, 26.3 (`fail-fast: false`); Temurin 25; `spotlessCheck`, `:common:test`, `check build "-PmcVersion=<v>"`, jar upload, test summary and test reports (reports always uploaded); actions pinned by full SHA (checkout v7.0.1, setup-java v6.0.1, gradle/actions v6.4.0, upload-artifact v7.0.2); `permissions: contents: read`; concurrency cancel.
 - First run on PR #1 (run 38059858897, 2026-10-10): all three jobs green, jars uploaded (about 53 KB each, nothing shaded). This confirmed Temurin 25 resolves on `ubuntu-latest` and that the Foojay JDK 21 download works on the runner. The `gradlew` executable bit had to be set in the git index (`100755`) because it is committed from Windows.
-- Runner annotations: Gradle 9.2.1 was flagged "out of date" (addressed by the 9.8.1 upgrade; the CI result is recorded once the pull request has run) and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
+- Runner annotations: Gradle 9.2.1 was flagged "out of date" (addressed by the 9.8.1 upgrade, merged in PR #8) and `ubuntu-latest` migrates to Ubuntu 26 on 2026-10-19.
+- Changes of 2026-10-11 (PR #8 and #9, confirmed on the runner): every `Set up Gradle` step has `validate-wrappers: true` (the runner log shows "All Gradle Wrapper jars are valid"); `ci.yml` always uploads the test reports as `reports-mc<version>` and writes a test summary to the job summary (both steps succeeded on PR #9); `verifyTestResults` runs inside `check`. `release.yml` got only `validate-wrappers: true` on its two `Set up Gradle` steps; no run after that change is recorded, so it is unverified on the runner.
+- Follow-ups from the reviews, deliberately not fixed yet because touching `ci.yml` triggers another high-risk review: the CI summary glob counts every `*.xml` in the results folder while `verifyTestResults` counts only `TEST-*.xml` (use `TEST-*.xml`; the awk `attr()` regex is brittle if attribute order changes); `verifyModMetadata` opens the jar twice (merge the test-framework scan into the existing read); add a comment in `common/build.gradle.kts` explaining why `verifyTestResults` is both a finalizer of `test` and a dependency of `check`. Batch them with the next workflow change.
 - CI on `main` after the merge (run 38064670429, `3c2e81e`): all three jobs green.
-- `release.yml` is on `main` now but has NEVER run. Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
+- `release.yml` has run for real once (tag `v0.1.0`, see "Progress") and as a dry run via `workflow_dispatch`; it has not run since the `validate-wrappers` change, which was added after that release. Triggers: tag `v*.*.*` (semver regex, must equal `mod_version`, commit must be on the default branch, CHANGELOG section required, no existing GitHub Release) and `workflow_dispatch` (always a dry run). Jobs: `validate`, `build` matrix, `github-release` (only job with `contents: write`), `modrinth` matrix, `summary`. Modrinth upload through Minotaur 2.10.0 (`environment = client_only`, required dependency `kotlin-lang-forge`, version `<mod_version>+mc<mc>`, `release` for 26.1.2 and 26.2, `beta` for 26.3 via `modrinth_version_type` in `gradle/mc/*.properties`). Duplicate Modrinth versions fail the job. Third-party actions pinned by full SHA (adds softprops/action-gh-release v3.0.3 and download-artifact v8.0.2).
 - Local proof (2026-10-10): `.\gradlew.bat modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` succeeds without a token and prints the planned payload; Minotaur debug mode makes two read-only GETs to api.modrinth.com. A real upload requires `MODRINTH_TOKEN` in the environment, `MODRINTH_PROJECT_ID` and `-PmodrinthDryRun=false`.
 - Release dry run (2026-10-11, run 38091137721, `workflow_dispatch` on `main`): Validate, the three builds, the three Modrinth jobs and Summary succeeded; the GitHub Release job was skipped as designed. Two warnings: the Modrinth project returned HTTP 404 (not public yet), so the duplicate guard could not check `0.1.0+mc<mc>`, and at that time `CHANGELOG.md` had no `[0.1.0]` section (added afterwards, dated 2026-10-11; change the date if the tag is cut later). A dry run never sends the token to Modrinth, so the token's validity is untested.
 - Modrinth credentials: the project exists; repository secret `MODRINTH_TOKEN` and repository variable `MODRINTH_PROJECT_ID` are set (checked by name only, 2026-10-11). The project id is not secret; the token must never be a variable and never be stored or printed. A token was once saved as a plain variable by mistake and was revoked and replaced.
@@ -168,9 +232,13 @@ Result from the logs: the server printed `Dev logged in` and `Dev joined the gam
 
 ## Next steps
 
-1. T11: done so far with approval: Modrinth project and credentials, release dry run, `[0.1.0]` changelog section. Still waiting for explicit approval: making the repository public, making the Modrinth project public, and tagging `v0.1.0`.
+1. T11 for 0.1.0 is done with the maintainer's approval (repository public, tag `v0.1.0`, GitHub Release, Modrinth uploads). Still open for the maintainer: complete the Modrinth page and submit it for review, then check the three uploaded versions in the Modrinth dashboard (26.3 should show as beta).
 2. Verify the original chestplate-and-durability icon in the in-game mod list; metadata uses `iconFile`/`iconBlur` on 26.2 and 26.3 and `logoFile`/`logoBlur` on 26.1.2 (see "Version specifics learned").
 3. Finish the manual visual checklist: the default layout and F3 are done on all three versions. Still open on every version: partial and near-broken damage, empty slots, spectator, F1, GUI scales 1 to 4, all six anchors, `debugScreenMode` `HIDE` and `KEEP`, the F3 anchor against a targeted block that lengthens the right column, the config screen, and world join and leave.
 4. Optional: look at the HUD on screen while connected to a vanilla server, and join vanilla 26.1.2 and 26.3 servers (a vanilla 26.2 join is done, see "Vanilla server join").
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
-6. Optional extras: low-durability warning, translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
+6. Optional extras: a low-durability warning on the armor HUD (it exists only for the weapon tooltip), translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
+7. Weapon tooltip: finish the in-game matrix on 26.1.2, 26.2 and 26.3 (every item in "Known issues" marked NOT verified), starting with a damaged weapon at each colour tier boundary, the F3+H skip and the creative search skip.
+8. Weapon tooltip, only if asked: include/exclude item lists (ids or `#tags`, resolved once on config refresh) for modded weapons without standard tags, and optional always-on weapon HUD rows behind a toggle.
+9. Follow-ups recorded in `odd/tasks/gradle-junit-weapon-tooltip.md`, to batch with the next workflow change: CI summary glob should count only `TEST-*.xml`, merge the two jar opens in `verifyModMetadata`, comment on why `verifyTestResults` is both a finalizer of `test` and a dependency of `check`.
+10. The weapon tooltip, the Gradle upgrade and the test hardening are on `main` but NOT released: the published `0.1.0` jars do not contain them. A release needs a decision on the next version (0.2.0 is suggested), a `CHANGELOG.md` section, and the maintainer's explicit approval for the tag; nothing is bumped or tagged yet.

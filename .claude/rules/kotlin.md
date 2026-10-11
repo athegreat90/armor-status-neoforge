@@ -67,3 +67,5 @@ Do not nest scope functions more than one level. If `it`/`this` becomes ambiguou
 - `neoforge/.../hud/ArmorStatusLayer.kt`: render-path rules in practice (indexed loops over `SLOTS`, cached layout and text, one-shot `failed` flag, documented mutable fields).
 - `common/.../model/DurabilityReading.kt`: sealed interface, validation in `init`, and `readDurability` as a total conversion that clamps bad input.
 - `common/.../config/HudSettings.kt`: immutable `data class` with `init` validation and the lenient `sanitized` factory.
+- `common/.../weapon/WeaponClassifier.kt`: a `@JvmInline value class` bitmask (`WeaponSignals`) and a pure `classifyWeapon`; the adapter only observes, `common` decides.
+- `common/.../tooltip/TooltipDurability.kt` and `neoforge/.../tooltip/WeaponTooltip.kt`: the pure decision returns a value or `null`, and the listener only wires the event to it, with an early exit and a one-shot `failed` flag instead of `runCatching`.

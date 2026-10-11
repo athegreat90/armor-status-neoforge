@@ -19,7 +19,8 @@ In CI the `common/build/reports` and `test-results` folders are uploaded as arti
 ## What not to test
 
 - Minecraft or NeoForge internals, and code that needs a running game (`ArmorStatusLayer`, `HudCanvas`, `ModConfigSpec` binding, the config screen). There is no unit-test harness for them.
-- Do not mock Minecraft types to make a test pass; move the decision into `common` instead.
+- Do not mock Minecraft types to make a test pass; move the decision into `common` instead. Example: the weapon decision is tested in `weapon/WeaponClassifier.kt` and `tooltip/TooltipDurability.kt` (`common`), while `neoforge/.../tooltip/WeaponTooltip.kt` and the stack-to-signals mapping are not unit tested.
+- Minecraft-bound code has no unit-test harness, so the in-game checklist is the proof. Anything not looked at on screen is recorded as unverified.
 
 ## Running tests
 

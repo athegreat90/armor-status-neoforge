@@ -1,10 +1,10 @@
 # Armor Status NeoForge
 
-A client-side NeoForge mod that shows the durability of your worn armor on the HUD: one row per piece with the item icon and the remaining durability. It is written in Kotlin on top of KotlinLangForge and targets Minecraft 26.1.2, 26.2 and 26.3.
+A client-side NeoForge mod that shows the durability of your worn armor on the HUD: one row per piece with the item icon and the remaining durability. It also adds a durability line to the hover tooltip of weapons. It is written in Kotlin on top of KotlinLangForge and targets Minecraft 26.1.2, 26.2 and 26.3.
 
 > **Unofficial.** This project is not affiliated with, endorsed by, or an official release of [ShirjeelPlays](https://github.com/ShirjeelPlays/Armor-Status), the author of the Fabric mod [Armor Status](https://modrinth.com/mod/armor-status) that inspired it. It is an independent, clean-room reimplementation. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-**Status:** in development. No release has been published, and the Modrinth page for this mod does not exist yet.
+**Status:** version 0.1.0 is released on GitHub (see the Releases page). The Modrinth project exists but its page was not public yet when this was written; check the project for its current state. The weapon durability tooltip described below is on `main` and is not part of 0.1.0.
 
 ## Features
 
@@ -17,7 +17,8 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 - Toggles per armor slot, plus a global enable toggle.
 - Hidden while spectating, while the HUD is hidden with F1, and when there is no player.
 - While the F3 debug screen is open the HUD stays visible but compact (scaled down, so the rows sit closer together and cover less of the debug text). Choose `COMPACT`, `HIDE` or `KEEP` with `debugScreenMode`. In `COMPACT` mode the HUD also moves to its own anchor (`debugScreenAnchor`, bottom right by default) so it does not sit under the F3 text.
-- Client-only: the server does not need the mod.
+- Weapon durability in the item hover tooltip: one line right under the item name, for example `Durability: 1480 / 1561 (95%)`, with colour tiers. It appears wherever the game shows an item tooltip (inventory, chests, creative menu and other container screens); weapons are not drawn on the game HUD. See [Weapon durability tooltip](#weapon-durability-tooltip).
+- Client-only: the server does not need the mod. The tooltip is also client side and adds no networking.
 
 ## Supported Minecraft versions
 
@@ -57,6 +58,74 @@ Edit `config/armorstatusneoforge-client.toml`, or open **Mods > Armor Status Neo
 
 NeoForge corrects invalid values in the file: numbers are clamped to the nearest bound, and invalid enum or boolean values are reset to their defaults.
 
+The weapon tooltip has its own `[weaponTooltip]` section in the same file, described below.
+
+## Weapon durability tooltip
+
+Hover a weapon in the inventory, a chest, the creative menu or another container screen and the tooltip gets one extra line directly under the item name:
+
+```text
+Diamond Sword
+Durability: 1480 / 1561 (95%)
+```
+
+The weapon durability is shown only in that hover tooltip. There are no weapon rows on the game HUD and the armor HUD is unchanged. The cursor is locked during normal play, so nothing about weapons is drawn on the game screen. The item-name popup that appears above the hotbar when you switch items is not a tooltip and is not covered.
+
+### Which items count as weapons
+
+The mod does not keep a list of items. A stack counts as a weapon when it is damageable (not empty and not unbreakable) and matches one of these standard signals:
+
+- Item tags `c:tools/melee_weapon`, `c:tools/ranged_weapon`, `c:tools/bow`, `c:tools/crossbow`, `#minecraft:swords`, `#minecraft:axes`, `#minecraft:spears`.
+- The enchantability tags for weapons, bows, crossbows and tridents (`#minecraft:enchantable/weapon`, `/bow`, `/crossbow`, `/trident`).
+- The `kinetic_weapon` or `piercing_weapon` data components (spears and spear-like items).
+
+By the vanilla tags that covers swords, axes, spears, the mace, the trident, the bow and the crossbow, and modded items that join those tags or carry those components. Axes can be switched off with `includeAxes`. Pickaxes, shovels, hoes, fishing rods, flint and steel, shears, shields, armor, elytra and unbreakable items get no line. The vanilla `weapon` data component is not used, because pickaxes, shovels and hoes carry it too.
+
+### When the line is not added
+
+- Advanced tooltips (F3+H) are on: vanilla already prints its own `Durability: x / y` line there, so the mod adds nothing.
+- There is no player, which is how the game builds the creative menu search index. Adding a line then would make every weapon match a search such as "durability".
+- `enabled` is off, or the weapon is undamaged and `showUndamaged` is off.
+
+### Colours
+
+The default scheme, `TIERS`, colours the line by the percent shown in the text:
+
+| Displayed percent | Colour |
+|---|---|
+| above 50 | green |
+| 26 to 50 | yellow |
+| above `warningThresholdPercent` up to 25 | orange |
+| at or below `warningThresholdPercent` (15 by default) | red |
+
+A threshold of 25 or more removes the orange tier and 50 or more removes the yellow tier too. With `lowDurabilityWarning` off, the red tier is shown as orange. `WHITE` always draws white text. `GRADIENT` uses the same smooth colour gradient as the armor HUD's `gradientColors`.
+
+### Weapon tooltip settings
+
+These keys are in the `[weaponTooltip]` section of `config/armorstatusneoforge-client.toml`.
+
+| Key | Default | Allowed values |
+|---|---|---|
+| `enabled` | `true` | `true`, `false`; adds the line at all |
+| `showMax` | `true` | `true`, `false`; `1480 / 1561` instead of `1480` |
+| `showPercent` | `true` | `true`, `false`; appends `(95%)`, rounded like the armor `PERCENT` mode |
+| `showUndamaged` | `true` | `true`, `false`; when off, a weapon at full durability gets no line |
+| `colorScheme` | `TIERS` | `TIERS`, `WHITE`, `GRADIENT` |
+| `lowDurabilityWarning` | `true` | `true`, `false`; when off, red is shown as orange |
+| `warningThresholdPercent` | `15` | `1` to `99`; displayed percent at or below which the line is low |
+| `includeAxes` | `true` | `true`, `false` |
+
+The remaining durability is always shown, so the line never reads as just a percent. A 0.1.0 config file keeps its armor values; NeoForge adds the new section and logs its normal `Correcting` line (checked on Minecraft 26.2).
+
+### Weapon tooltip limitations
+
+- The text exists in English only; other languages fall back to it.
+- A datapack item that hides only its damage component from the tooltip still gets the line, because the mod does not read the tooltip display data (it exists only on 26.2 and 26.3).
+- A modded weapon that is in none of the standard tags and has neither spear component gets no line. Item include and exclude lists do not exist yet.
+- The creative menu hands out undamaged items, so every weapon there reads 100% unless `showUndamaged` is off.
+- Other tooltip mods build tooltips through the same path, so the line can also appear there; its position relative to other mods' lines is not controlled.
+- In-game checks so far: the line was seen under the name, in green, for a Trident on Minecraft 26.1.2 and a Netherite Axe on 26.3, and was reported seen on 26.2. Not checked in game: damaged weapons and the yellow, orange and red tiers, the other weapon types, the items that should get no line (pickaxe, shield and so on), the F3+H skip, the creative search skip, the section in the config screen, config changes while the game runs, a vanilla server with the tooltip, and the config upgrade from a real 0.1.0 file on 26.1.2 and 26.3 (the upgrade kept the 12 armor keys on 26.2).
+
 ## Development
 
 The project can live in any directory; the build does not depend on an absolute path. Commands below are run from the repository root.
@@ -65,7 +134,8 @@ The project can live in any directory; the build does not depend on an absolute 
 
 - JDK 25.
 - Network access on first build. Gradle downloads a JDK 21 through the Foojay toolchain resolver, because ModDevGradle's asset download task needs a Java 21 launcher.
-- The Gradle wrapper (9.8.1) is committed; do not use a locally installed Gradle.
+- The Gradle wrapper (9.8.1, checksum pinned) is committed; do not use a locally installed Gradle. Kotlin Gradle Plugin 2.4.21 documents support only up to Gradle 9.7.0, so 9.8.1 is outside its documented range; it builds and tests all three targets in CI.
+- Kotlin 2.4.21, with KotlinLangForge as the language provider, and JUnit Jupiter 6.1.3 for the unit tests.
 
 ### Commands
 
@@ -75,7 +145,8 @@ Run from the repository root. On Windows use `gradlew.bat`; on Linux and macOS u
 .\gradlew.bat build                            # compile, check and package for the default target (26.1.2)
 .\gradlew.bat build "-PmcVersion=26.2"         # same, for another target
 .\gradlew.bat :common:test                     # unit tests of the pure module
-.\gradlew.bat check "-PmcVersion=26.2"         # Spotless (ktlint) check + jar metadata verification + tests
+.\gradlew.bat :common:test --rerun-tasks       # force a real re-run instead of an up-to-date result
+.\gradlew.bat check "-PmcVersion=26.2"         # Spotless (ktlint) check + jar metadata verification + tests + verifyTestResults
 .\gradlew.bat spotlessApply                    # format Kotlin sources and Gradle scripts
 .\gradlew.bat runClient "-PmcVersion=26.2"     # start a dev client with the mod loaded
 .\gradlew.bat runClient "-PquickPlay=TestWorld"  # dev only: join the save neoforge/run/saves/TestWorld on launch
@@ -90,8 +161,8 @@ Valid `mcVersion` values are the file names in `gradle/mc/` (`26.1.2`, `26.2`, `
 
 | Path | Contents |
 |---|---|
-| `common/` | Pure Kotlin with no Minecraft dependency: durability model, text and colour, layout, settings, visibility rule, error recovery. Unit tested. |
-| `neoforge/` | NeoForge adapter: `@Mod` entrypoint, `ModConfigSpec` binding, config screen, GUI layer, `HudCanvas`. |
+| `common/` | Pure Kotlin with no Minecraft dependency: durability model, text and colour (including the shared colour tiers), layout, settings, visibility rule, weapon classification and the tooltip decision, error recovery. Unit tested. |
+| `neoforge/` | NeoForge adapter: `@Mod` entrypoint, `ModConfigSpec` binding, config screen, GUI layer, `HudCanvas`, and the weapon tooltip listener. |
 | `neoforge/src/v26_1`, `neoforge/src/v26_2` | Per-version overlay with the only code that differs: the F1 "hide GUI" check. 26.2 and 26.3 share `v26_2`. |
 | `gradle/mc/` | One properties file per Minecraft version: NeoForge build and Minecraft range. |
 
@@ -101,11 +172,15 @@ All decisions that can be expressed without Minecraft types live in `common` and
 
 The HUD runs every frame, so the render path uses indexed loops over fixed arrays, no collection pipelines or per-frame allocations, and caches the layout and the durability strings until their inputs change. Settings are an immutable snapshot swapped atomically when the config file loads.
 
+The weapon tooltip follows the same split. The adapter only reads the stack (tag membership and data components) into a small bitmask, `WeaponSignals`; `classifyWeapon` in `common` decides whether it is a weapon, and `tooltipDurability` decides the line. A listener on NeoForge's `ItemTooltipEvent` inserts it at index 1. It keeps no cache and no state besides a one-shot failure flag, because the tooltip is rebuilt every frame while hovering and the tag sets are rebound on datapack reload. The listener needs no per-version overlay: the event is the same on all three targets.
+
 ### Tests
 
-`common` has JUnit Jupiter 6.1.3 and kotlin-test unit tests covering durability reading, text and colour, layout for every anchor, settings validation, the visibility rule, caches, and error recovery. The `verifyTestResults` check, part of `check`, fails the build if no test ran, a test was skipped, or a test class produced no results. CI uploads the test reports on every run and prints a summary.
+`common` has JUnit Jupiter 6.1.3 and kotlin-test unit tests covering durability reading, text and colour tiers, layout for every anchor, settings validation, the visibility rule, caches, error recovery, weapon classification and the tooltip decision. Run them with `.\gradlew.bat :common:test`.
 
-NeoForge-bound code has no unit tests. It is verified by compilation on all three targets, by the metadata check on the built jar, and by dev-client runs. Unit tests are not evidence of in-game behaviour.
+The `verifyTestResults` task runs after `test` and is part of `check`. It fails the build if no test ran, a test was skipped, failed or errored, or a `*Test.kt` class produced no results (a filtered `--tests` run skips only that last check). `verifyModMetadata` also fails if the mod jar contains `org/junit/` or `kotlin/test/` entries. CI uploads the test reports on every run and prints a summary.
+
+NeoForge-bound code, including the tooltip listener and the stack-to-signals mapping, has no unit tests. It is verified by compilation on all three targets, by the metadata check on the built jar, and by dev-client runs. Unit tests are not evidence of in-game behaviour.
 
 ## Known limitations
 
@@ -113,9 +188,10 @@ NeoForge-bound code has no unit tests. It is verified by compilation on all thre
 - Minecraft 26.3 builds against a NeoForge beta; there is no stable NeoForge 26.3 build.
 - The config screen shows enum values by their raw names (for example `MIDDLE_LEFT`), not translated labels.
 - Joining a vanilla Minecraft 26.2 server with the mod installed works (checked in the logs). Vanilla 26.1.2 and 26.3 servers have not been tried, and the HUD was not checked on screen on a vanilla server.
+- The weapon tooltip has been seen in game only on a Trident (26.1.2) and a Netherite Axe (26.3), both undamaged, plus a user report for 26.2 (see [Weapon tooltip limitations](#weapon-tooltip-limitations)). Damaged weapons, the colour tiers other than green, the other weapon types, the F3+H and creative search skips, the config screen section, live config changes and a vanilla server with the tooltip have not been checked.
 - Like the original mod, there is no offhand handling and no special handling for elytra beyond the chest slot.
 - The config screen has not been opened in a recorded test.
-- No release has been published.
+- The weapon durability tooltip is not released yet; it is on `main` only, so the 0.1.0 files do not contain it.
 
 ## Credits
 

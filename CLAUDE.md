@@ -8,7 +8,7 @@ Durable rules for Claude Code in this repository. Project state, versions and hi
 
 - The repository can live in any directory (native Windows or WSL); the build uses no absolute paths, so docs and commands refer to the repository root. Do not write machine-specific absolute paths into the repository.
 - Shell is PowerShell on Windows 11. Use `gradlew.bat`. **Quote `"-PmcVersion=26.2"`**: unquoted, PowerShell splits at the dot.
-- Goal: a client-only NeoForge mod (Kotlin, KotlinLangForge) that shows armor durability on the HUD, for Minecraft 26.1.2, 26.2 and 26.3. Unofficial, clean-room inspired by ShirjeelPlays' Armor Status.
+- Goal: a client-only NeoForge mod (Kotlin, KotlinLangForge) that shows armor durability on the HUD and weapon durability in the item hover tooltip, for Minecraft 26.1.2, 26.2 and 26.3. Unofficial, clean-room inspired by ShirjeelPlays' Armor Status.
 - Modules: `common` (pure Kotlin, zero Minecraft dependency) and `neoforge` (adapter). Pure decisions go in `common`.
 
 ## Kotlin policy (condensed)
@@ -24,16 +24,17 @@ Durable rules for Claude Code in this repository. Project state, versions and hi
 
 - Use `runCatching` only at recoverable boundaries, through `loadOrDefault` in `common/.../error/Recovery.kt` (for example reading the config file into `HudSettings`).
 - Never swallow fatal failures: `isFatal()` covers `CancellationException`, `InterruptedException`, `VirtualMachineError` and `LinkageError`; `rethrowFatal()` rethrows them.
-- **Never in the render path.** Render code is total; a one-shot `failed` flag disables the layer and logs once.
+- **Never in the render path or the tooltip listener.** That code is total; a one-shot `failed` flag disables the layer or listener and logs once.
 - Do not mask mod init failures.
 - Validate ranges explicitly (`coerceIn`), not with exceptions.
 
 ## Immutability and documented mutable exceptions
 
-State is immutable by default. Two deliberate exceptions, both documented in code:
+State is immutable by default. Three deliberate exceptions, all documented in code:
 
 1. `ActiveHudSettings`: one `@Volatile` reference to an immutable `HudSettings`, replaced whole on config load or reload.
 2. The render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays), owned by one instance and touched only by the render thread.
+3. The one-shot `@Volatile failed` flag in `WeaponTooltip` (volatile because the listener can run off the render thread during the creative search index build).
 
 Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 
@@ -56,6 +57,15 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 - Targets are the files in `gradle/mc/*.properties`; select one with `-PmcVersion=<ver>` (default `26.1.2`). One jar per version, named `armor-status-neoforge-<modVersion>+mc<mc>.jar`.
 - The only version-dependent code is the hide-GUI check: overlay `neoforge/src/v26_1` (26.1.x, `Options#hideGui`) and `neoforge/src/v26_2` (26.2 and 26.3, `Hud#isHidden`). Add an overlay only when a real compile break appears.
 - Keep version-sensitive Minecraft calls behind `HudCanvas` and the overlays. 26.3 uses a NeoForge beta.
+- The weapon tooltip needs no per-version overlay: `ItemTooltipEvent`, the tags and the data components it reads are identical on the three targets.
+
+## Weapon durability tooltip
+
+- Hover tooltip only. **No weapon rows on the game HUD** (user decision, 2026-10-11); the armor HUD is unchanged. Add weapon HUD rows only if the user asks.
+- Classification: the adapter (`neoforge/.../tooltip/WeaponSignalReader.kt`) only observes the stack and builds `WeaponSignals`, a bitmask `@JvmInline value class`; the pure decision is `classifyWeapon(signals, policy)` in `common/.../weapon/WeaponClassifier.kt`. A weapon is damageable and matches a tag (`c:tools/melee_weapon`, `c:tools/ranged_weapon`, `c:tools/bow`, `c:tools/crossbow`, `#minecraft:swords`, `#minecraft:axes`, `#minecraft:spears`, the `enchantable/weapon|bow|crossbow|trident` tags) or has the `KINETIC_WEAPON` or `PIERCING_WEAPON` component (spears). **`DataComponents.WEAPON` is not a discriminator**: pickaxes, shovels and hoes carry it. Axes are included by default and switched off with `includeAxes`; `AXE_TAG` is a weapon signal only while axes are included. No hardcoded item list.
+- Listener (`neoforge/.../tooltip/WeaponTooltip.kt`): `ItemTooltipEvent` on `NeoForge.EVENT_BUS`; the line goes at index 1 (right under the name); skipped for advanced tooltips (vanilla prints its own line) and when `event.entity == null` (creative search index build). No cache and no state besides a one-shot `failed` flag; fatal errors are rethrown. Never read `event.display`: it exists only on 26.2 and 26.3.
+- Shared helpers in `common`: `percentRounded()` (the single displayed percent), `isLow(threshold)` (decided on the displayed percent), `ColorScheme` with `color(...)` and the `TIER_*` colours, and `tooltipDurability(...)` / `valueText()` for the line. Do not recompute percentages elsewhere.
+- Performance: the tooltip path runs every frame while a slot is hovered and for every item while the creative search index is built. Classify with cheap bit tests, return early, build one `Component` only when a line is actually added, allocate nothing else, and never use `runCatching` or collection pipelines there.
 
 ## HUD rendering performance
 
@@ -67,7 +77,7 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 
 - Pure logic in `common`: write the failing test first (RED), then implement (GREEN), then refactor. JUnit Jupiter 6.1.3 + kotlin-test, parameterized tests, immutable fixtures.
 - `verifyTestResults` (runs after `test`, part of `check`) fails on zero executed tests, any skipped test, or a `*Test.kt` without results, so every test class must produce results. CI uploads the test reports always and prints a summary; `verifyModMetadata` rejects `org/junit/` and `kotlin/test/` entries in the jar.
-- Exception: NeoForge-bound code has no unit-test harness. Prove it by compiling all three targets, `check`, and `runClient`. Say so in the commit or `MEMORY.md`.
+- Exception: NeoForge-bound code (the HUD layer, the tooltip listener, the stack-to-signals mapping) has no unit-test harness. Prove it by compiling all three targets, `check`, and `runClient`. Say so in the commit or `MEMORY.md`.
 - Never report unit tests as runtime verification. Record what was run, with date and outcome, in `MEMORY.md`.
 
 ## GitHub Actions and Modrinth
