@@ -65,7 +65,7 @@ jobs:
         env:
           MC: ${{ matrix.mc }}
         run: |
-          set -- common/build/test-results/test/*.xml
+          set -- common/build/test-results/test/TEST-*.xml
           {
             echo "### Unit tests (Minecraft $MC)"
             if [ -e "$1" ]; then
@@ -87,7 +87,7 @@ jobs:
                   printf "%d suites, %d tests, %d failures, %d errors, %d skipped\n", suites, tests, failures, errors, skipped
                 }' "$@"
             else
-              echo "No test result files found in common/build/test-results/test."
+              echo "No TEST-*.xml result files found in common/build/test-results/test."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
