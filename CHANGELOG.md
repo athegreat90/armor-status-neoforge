@@ -6,10 +6,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Weapon durability line in the item hover tooltip (inventory, chests, creative menu and other container screens), for example `Durability: 1480 / 1561 (95%)`, right under the item name. Weapons are swords, axes, spears, the mace, the trident, the bow, the crossbow and modded items that use the standard weapon tags or the spear components. The line is skipped for advanced tooltips (F3+H) and for the creative search index. It is client side only and adds no networking.
+- New `[weaponTooltip]` config section: `enabled`, `showMax`, `showPercent`, `showUndamaged`, `colorScheme` (`TIERS`, `WHITE`, `GRADIENT`), `lowDurabilityWarning`, `warningThresholdPercent` (`1` to `99`, default `15`) and `includeAxes`. Existing armor keys and defaults are unchanged.
+- Colour tiers for the tooltip line: green above 50%, yellow 26 to 50%, orange down to the warning threshold, red at or below it.
+- Shared durability helpers in `common` (`percentRounded`, `isLow`, `ColorScheme`), the weapon classification (`classifyWeapon`) and the tooltip decision (`tooltipDurability`), with unit tests.
+
 ### Changed
 
 - Gradle Wrapper updated from 9.2.1 to 9.8.1.
 - Test run is guarded by a `verifyTestResults` check (no undiscovered, skipped or missing test classes) and CI always uploads the test reports with a summary.
+- The mod jar check rejects JUnit and `kotlin-test` entries, `common` depends on the `junit-jupiter` aggregator (BOM 6.1.3), archives are built reproducibly, and CI validates the Gradle wrapper.
+
+### Known issues
+
+- The weapon tooltip was seen in game only on a Trident (26.1.2) and a Netherite Axe (26.3), both undamaged, plus a user report for 26.2. Damaged weapons and the yellow, orange and red tiers, the other weapon types, the F3+H and creative search skips, the config screen section, live config changes and a vanilla server with the tooltip have not been checked.
+- Tooltip text is English only. A datapack item that hides only its damage component still gets the line, and a modded weapon without the standard tags or spear components gets none.
 
 ## [0.1.0] - 2026-10-11
 
