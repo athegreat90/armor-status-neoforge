@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Gradle Wrapper updated from 9.2.1 to 9.8.1.
+
 ## [0.1.0] - 2026-10-11
 
 First release. An unofficial, clean-room NeoForge reimplementation of the idea behind Armor Status by ShirjeelPlays.

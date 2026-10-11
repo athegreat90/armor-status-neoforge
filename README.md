@@ -65,7 +65,7 @@ The project can live in any directory; the build does not depend on an absolute 
 
 - JDK 25.
 - Network access on first build. Gradle downloads a JDK 21 through the Foojay toolchain resolver, because ModDevGradle's asset download task needs a Java 21 launcher.
-- The Gradle wrapper (9.2.1) is committed; do not use a locally installed Gradle.
+- The Gradle wrapper (9.8.1) is committed; do not use a locally installed Gradle.
 
 ### Commands
 

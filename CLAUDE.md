@@ -48,7 +48,7 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 ## Toolchain
 
 - Java 25 for the project. Gradle also needs a JDK 21 launcher for ModDevGradle's `downloadAssets`; the Foojay resolver (`1.0.0`) downloads it.
-- Gradle wrapper **9.2.1**, pinned with `distributionSha256Sum`. Kotlin Gradle Plugin 2.4.21 documents support up to Gradle 9.7.0. Bump only after a verified build on all targets.
+- Gradle wrapper **9.8.1**, pinned with `distributionSha256Sum` (version, type and checksum live in `tasks.wrapper` in the root `build.gradle.kts`; run `wrapper` twice after changing them). Kotlin Gradle Plugin 2.4.21 documents support up to Gradle 9.7.0, so 9.8.1 is outside the documented range; fallback 9.7.1. Bump only after a verified build on all targets.
 - Formatting: Spotless with ktlint 1.8.0, `ktlint_official`, 120 columns (`.editorconfig`). Run `spotlessApply`, then `check`.
 
 ## Minecraft version compatibility
