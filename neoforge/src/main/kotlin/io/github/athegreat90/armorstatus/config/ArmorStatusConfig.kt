@@ -98,6 +98,8 @@ internal object ArmorStatusConfig {
                     lowDurabilityWarning = weaponTooltip.lowDurabilityWarning.get(),
                     warningThresholdPercent = weaponTooltip.warningThresholdPercent.get().toDouble(),
                     includeAxes = weaponTooltip.includeAxes.get(),
+                    includeItems = weaponTooltip.includeItems.get(),
+                    excludeItems = weaponTooltip.excludeItems.get(),
                 ),
         )
 
@@ -144,6 +146,22 @@ internal object ArmorStatusConfig {
                     builder
                         .entry("weaponTooltipIncludeAxes", "Count axes as weapons.")
                         .define("includeAxes", true),
+                includeItems =
+                    builder
+                        .entry(
+                            "weaponTooltipIncludeItems",
+                            "Items that always get the line, for modded weapons without standard weapon tags. " +
+                                "Item ids like \"examplemod:ruby_sword\" or item tags like \"#examplemod:swords\". " +
+                                "Invalid entries are ignored. Items without durability never get a line.",
+                        ).defineListAllowEmpty("includeItems", emptyList<String>(), { "" }, { it is String }),
+                excludeItems =
+                    builder
+                        .entry(
+                            "weaponTooltipExcludeItems",
+                            "Items that never get the line, for example \"minecraft:iron_sword\" or " +
+                                "\"#c:tools/melee_weapon\". This wins over the weapon tags and over includeItems. " +
+                                "Invalid entries are ignored.",
+                        ).defineListAllowEmpty("excludeItems", emptyList<String>(), { "" }, { it is String }),
             )
         builder.pop()
         return values
@@ -158,6 +176,8 @@ internal object ArmorStatusConfig {
         val lowDurabilityWarning: ModConfigSpec.BooleanValue,
         val warningThresholdPercent: ModConfigSpec.IntValue,
         val includeAxes: ModConfigSpec.BooleanValue,
+        val includeItems: ModConfigSpec.ConfigValue<List<String>>,
+        val excludeItems: ModConfigSpec.ConfigValue<List<String>>,
     )
 
     private fun ModConfigSpec.Builder.entry(

@@ -140,6 +140,25 @@ class WeaponTooltipSettingsTest {
         assertEquals(WeaponTooltipSettings.Default, WeaponTooltipSettings.sanitized())
     }
 
+    @Test
+    fun `the item lists are empty by default`() {
+        assertTrue(WeaponTooltipSettings.Default.includeItems.isEmpty)
+        assertTrue(WeaponTooltipSettings.Default.excludeItems.isEmpty)
+    }
+
+    @Test
+    fun `sanitized parses and normalises the item lists and drops bad entries`() {
+        val result =
+            WeaponTooltipSettings.sanitized(
+                includeItems = listOf("Examplemod:Ruby_Sword", "#c:tools/melee_weapon", "bad entry"),
+                excludeItems = listOf("iron_sword", "#examplemod:toys"),
+            )
+        assertEquals(listOf("examplemod:ruby_sword"), result.includeItems.ids)
+        assertEquals(listOf("c:tools/melee_weapon"), result.includeItems.tags)
+        assertEquals(listOf("minecraft:iron_sword"), result.excludeItems.ids)
+        assertEquals(listOf("examplemod:toys"), result.excludeItems.tags)
+    }
+
     @ParameterizedTest(name = "includeAxes {0} -> policy includeAxes {0}")
     @ValueSource(booleans = [true, false])
     fun `policy carries includeAxes`(includeAxes: Boolean) {

@@ -2,6 +2,7 @@ package io.github.athegreat90.armorstatus.config
 
 import com.mojang.logging.LogUtils
 import io.github.athegreat90.armorstatus.error.loadOrDefault
+import io.github.athegreat90.armorstatus.tooltip.ResolvedItemFilter
 
 /**
  * Holder of the immutable [HudSettings] snapshot used by the HUD.
@@ -18,6 +19,15 @@ internal object ActiveHudSettings {
     var current: HudSettings = HudSettings.Default
         private set
 
+    /**
+     * The tooltip's include and exclude lists as registry keys, replaced whole with [current] on every refresh. It is
+     * part of this same snapshot: [HudSettings] lives in `common` and cannot hold Minecraft types, so the resolved
+     * form sits beside it. Readers may briefly see the new settings with the old lists; the next frame is consistent.
+     */
+    @Volatile
+    var weaponFilters: WeaponFilters = WeaponFilters.Empty
+        private set
+
     /** Re-reads the config file into a new snapshot; an invalid config falls back to the defaults. */
     fun refresh() {
         current =
@@ -25,6 +35,27 @@ internal object ActiveHudSettings {
                 default = { HudSettings.Default },
                 onFailure = { logger.warn("Invalid Armor Status configuration, using defaults", it) },
             ) { ArmorStatusConfig.read() }
+        weaponFilters = WeaponFilters.of(current.weaponTooltip)
         logger.info("Armor Status settings: {}", current)
+    }
+}
+
+/** The resolved include and exclude lists of the weapon tooltip. */
+internal class WeaponFilters(
+    val included: ResolvedItemFilter,
+    val excluded: ResolvedItemFilter,
+) {
+    companion object {
+        val Empty: WeaponFilters = WeaponFilters(ResolvedItemFilter.Empty, ResolvedItemFilter.Empty)
+
+        fun of(settings: WeaponTooltipSettings): WeaponFilters =
+            if (settings.includeItems.isEmpty && settings.excludeItems.isEmpty) {
+                Empty
+            } else {
+                WeaponFilters(
+                    ResolvedItemFilter.of(settings.includeItems),
+                    ResolvedItemFilter.of(settings.excludeItems),
+                )
+            }
     }
 }

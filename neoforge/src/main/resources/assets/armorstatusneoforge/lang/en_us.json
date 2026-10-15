@@ -23,5 +23,7 @@
   "armorstatusneoforge.configuration.weaponTooltipLowDurabilityWarning": "Low Durability Warning",
   "armorstatusneoforge.configuration.weaponTooltipWarningThresholdPercent": "Low Durability Threshold (%)",
   "armorstatusneoforge.configuration.weaponTooltipIncludeAxes": "Include Axes",
+  "armorstatusneoforge.configuration.weaponTooltipIncludeItems": "Always Include Items",
+  "armorstatusneoforge.configuration.weaponTooltipExcludeItems": "Always Exclude Items",
   "armorstatusneoforge.tooltip.durability": "Durability: %s"
 }

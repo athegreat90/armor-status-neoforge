@@ -57,7 +57,8 @@ internal object WeaponTooltip {
         if (event.entity == null) return
 
         val stack = event.itemStack
-        val isWeapon = classifyWeapon(stack.weaponSignals(), settings.policy())
+        val filters = ActiveHudSettings.weaponFilters
+        val isWeapon = classifyWeapon(stack.weaponSignals(filters.included, filters.excluded), settings.policy())
         if (!shouldAddTooltipLine(isWeapon, event.flags.isAdvanced, hasPlayer = true)) return
         val line = tooltipDurability(stack.maxDamage, stack.damageValue, settings) ?: return
 

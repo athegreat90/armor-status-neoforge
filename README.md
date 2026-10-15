@@ -114,6 +114,10 @@ These keys are in the `[weaponTooltip]` section of `config/armorstatusneoforge-c
 | `lowDurabilityWarning` | `true` | `true`, `false`; when off, red is shown as orange |
 | `warningThresholdPercent` | `15` | `1` to `99`; displayed percent at or below which the line is low |
 | `includeAxes` | `true` | `true`, `false` |
+| `includeItems` | `[]` | list of item ids or `#tags`; these items always count as weapons |
+| `excludeItems` | `[]` | list of item ids or `#tags`; these items never get the line |
+
+`includeItems` and `excludeItems` exist for modded weapons that carry none of the standard tags (or modded items you do not want a line on). Write item ids as `"examplemod:ruby_sword"` and item tags with a leading `#`, as `"#examplemod:swords"`. A missing namespace means `minecraft`, case is ignored, and invalid entries are ignored. `excludeItems` wins over `includeItems` and over every tag. An included item still needs durability: an unbreakable or non-damageable item never gets a line. Changes apply while the game runs.
 
 The remaining durability is always shown, so the line never reads as just a percent. An existing 0.1.0 config file keeps its armor values; NeoForge adds the new section and logs its normal `Correcting` line (checked on Minecraft 26.2).
 
@@ -121,7 +125,7 @@ The remaining durability is always shown, so the line never reads as just a perc
 
 - The text exists in English only; other languages fall back to it.
 - A datapack item that hides only its damage component from the tooltip still gets the line, because the mod does not read the tooltip display data (it exists only on 26.2 and 26.3).
-- A modded weapon that is in none of the standard tags and has neither spear component gets no line. Item include and exclude lists do not exist yet.
+- A modded weapon that is in none of the standard tags and has neither spear component gets no line until you add it to `includeItems`.
 - The creative menu hands out undamaged items, so every weapon there reads 100% unless `showUndamaged` is off.
 - Other tooltip mods build tooltips through the same path, so the line can also appear there; its position relative to other mods' lines is not controlled.
 - Verified by a headless probe (2026-10-11): on a real dedicated dev server for each of Minecraft 26.1.2, 26.2 and 26.3 (the mod loaded on the server for the probe only, a NeoForge fake player, the real `ItemStack.getTooltipLines` firing the real `ItemTooltipEvent` into the real listener), 60 of 60 checks passed on each version with no mod errors. It covered the mapping from real stacks over the whole item registry (the same 25 damageable vanilla weapons on all three versions, no misclassification), the line text, tier colours and boundaries, the insertion under the item name, each weapon type, the items that get no line (pickaxe, shovel, hoe, armor, fishing rod, flint and steel, shears, shield, elytra, unbreakable item, empty stack), the skip for advanced tooltips (exactly one vanilla durability line) and for a missing player, and the effect of the `[weaponTooltip]` settings.
