@@ -32,7 +32,7 @@ Durable rules for Claude Code in this repository. Project state, versions and hi
 
 State is immutable by default. Three deliberate exceptions, all documented in code:
 
-1. `ActiveHudSettings`: one `@Volatile` reference to an immutable `HudSettings`, replaced whole on config load or reload. It also holds `weaponFilters`, the resolved `includeItems`/`excludeItems` registry keys (`ResolvedItemFilter`), replaced whole in the same `refresh()` because `HudSettings` in `common` cannot hold Minecraft types.
+1. `ActiveHudSettings`: one `@Volatile` reference to an immutable `Snapshot` (the `HudSettings` plus the resolved `includeItems`/`excludeItems` registry keys, `ResolvedItemFilter`), replaced whole on config load or reload. The filters sit in the snapshot because `HudSettings` in `common` cannot hold Minecraft types; code that needs both reads `snapshot` once.
 2. The render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays), owned by one instance and touched only by the render thread.
 3. The one-shot `@Volatile failed` flag in `WeaponTooltip` (volatile because the listener can run off the render thread during the creative search index build).
 

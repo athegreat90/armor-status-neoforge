@@ -51,13 +51,14 @@ internal object WeaponTooltip {
     }
 
     private fun addLine(event: ItemTooltipEvent) {
-        val settings = ActiveHudSettings.current.weaponTooltip
+        val active = ActiveHudSettings.snapshot
+        val settings = active.settings.weaponTooltip
         if (!settings.enabled) return
         // No player means the creative-menu search index is being built; cheapest exit, and it keeps our line out.
         if (event.entity == null) return
 
         val stack = event.itemStack
-        val filters = ActiveHudSettings.weaponFilters
+        val filters = active.weaponFilters
         val isWeapon = classifyWeapon(stack.weaponSignals(filters.included, filters.excluded), settings.policy())
         if (!shouldAddTooltipLine(isWeapon, event.flags.isAdvanced, hasPlayer = true)) return
         val line = tooltipDurability(stack.maxDamage, stack.damageValue, settings) ?: return
