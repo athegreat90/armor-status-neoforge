@@ -206,8 +206,7 @@ jobs:
           {
             cat release-notes/release-notes.md
             printf '\n\n---\n\n'
-            printf 'One jar per Minecraft version. The Minecraft 26.3 jar builds against a NeoForge beta, so its '
-            printf 'Modrinth version is published on the beta channel until a stable NeoForge 26.3 exists.\n'
+            printf 'One jar per Minecraft version (26.1.2, 26.2 and 26.3).\n'
           } > release-body.md
 
       - name: Create GitHub Release

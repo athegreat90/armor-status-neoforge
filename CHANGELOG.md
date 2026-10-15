@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Minecraft 26.3 now builds against the stable NeoForge `26.3.0.84` (it was the `26.3.0.64-beta`), requires NeoForge `26.3.0.84` or newer, and is published on the Modrinth release channel instead of beta.
+
 ## [0.2.0] - 2026-10-11
 
 Adds the weapon durability hover tooltip. The armor HUD is unchanged.

@@ -47,8 +47,8 @@ Summary (details in `.claude/rules/kotlin.md`, condensed in `CLAUDE.md`): immuta
 
 | | 26.1.2 | 26.2 | 26.3 |
 |---|---|---|---|
-| NeoForge (dev build) | 26.1.2.115 | 26.2.0.89 | 26.3.0.64-beta |
-| FML (seen in `runClient`) | 11.0.15 | 11.0.16 | 12.0.9 |
+| NeoForge (dev build) | 26.1.2.115 | 26.2.0.89 | 26.3.0.84 |
+| FML (seen in `runClient`) | 11.0.15 | 11.0.16 | 12.0.12 (12.0.9 on the old beta) |
 | `minecraft_version_range` | `[26.1.2]` | `[26.2]` | `[26.3]` |
 | Source overlay | `v26_1` | `v26_2` | `v26_2` |
 
@@ -113,6 +113,7 @@ Weapon tooltip specifics (read from the 26.1.2, 26.2 and 26.3 jars, then compile
   - T8 (include/exclude item lists, weapon HUD rows, detekt spike, version catalog, configuration cache) is optional and only if asked.
   - Release 0.2.0 preparation (feature document entry T9): `mod_version=0.2.0`, CHANGELOG `[0.2.0] - 2026-10-11`, README, this file and the feature document, PR #14 (merge commit `ac74d84`), released the same day, see the next entry.
 - 2026-10-11 release of 0.2.0 (maintainer-approved; the maintainer asked the assistant to execute the release task): PR #14 was merged as `ac74d84` by `athegreat90` after CI was green on the PR and on `main` at that commit. The annotated tag `v0.2.0` was created on `ac74d84` and pushed. `release.yml` ran for real on the tag (run 38139661944): Validate, the three builds (26.1.2, 26.2, 26.3), GitHub Release, the three Modrinth jobs and Summary all succeeded. This was the first real run after the `validate-wrappers` change, and it worked. The GitHub Release `v0.2.0` ("Armor Status NeoForge 0.2.0") is published (not a draft, not a pre-release) with three jars: `armor-status-neoforge-0.2.0+mc26.1.2.jar` 94046 B, `+mc26.2.jar` 94117 B, `+mc26.3.jar` 94123 B; its notes are the `[0.2.0]` changelog section. The Modrinth jobs ran in real mode (`DRY_RUN: false`, token present, `HAS_TOKEN: true`, no `Modrinth DRY RUN` output, and no token value anywhere in the run log, 0 matches). The uploaded Modrinth versions themselves were not looked at because the project is still a draft (the public API answers 404); the maintainer must check them in the Modrinth dashboard (26.3 should be a beta). Unchanged: the Modrinth page is still to be completed and submitted for review by the maintainer; nothing else is released.
+- 2026-10-15 stable 26.3 (branch `feat/26.3-stable-and-item-lists`, not pushed): `gradle/mc/26.3.properties` now has `neo_version=26.3.0.84` and `modrinth_version_type=release` (the maven lists stable 26.3.0.76 to 26.3.0.84). Observed: `.\gradlew.bat spotlessCheck check build "-PmcVersion=26.3"` BUILD SUCCESSFUL without any overlay change; `modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` plans `"versionType": "release"`; `runClient "-PmcVersion=26.3" "-PquickPlay=TestWorld263"` loaded the mod on NeoForge 26.3.0.84 (FML 12.0.12), the player joined, 0 `ERROR`/`Exception` lines. The HUD was not looked at on screen this time. The client JVM was stopped by PID.
 
 ## Test results
 
@@ -204,7 +205,7 @@ What the probe does NOT prove: rendering on screen and GUI hover behaviour beyon
 - The Minotaur `Task.project` deprecation (Gradle 10) comes from Minotaur 2.10.0, not from this repository.
 - Gradle 9.8.1 is outside KGP 2.4.21's documented range (up to 9.7.0).
 - The default layout and the F3 compact layout were checked on screen on 26.1.2, 26.2 and 26.3. The rest of the manual checklist is pending, see "Manual verification".
-- 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
+- 26.3 builds against stable NeoForge 26.3.0.84 since 2026-10-15 (it was `26.3.0.64-beta`); the mods.toml minimum is now 26.3.0.84, so older beta installs must update. The 0.2.0 jar on Modrinth is still the beta-built one.
 - Config screen shows raw enum names.
 - Joining a vanilla 26.2 server works (logs only); vanilla 26.1.2 and 26.3 servers are untested, and the HUD was not checked on screen on a vanilla server. Client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
 - No offhand handling and no special elytra handling, as upstream.
@@ -255,7 +256,7 @@ What the probe does NOT prove: rendering on screen and GUI hover behaviour beyon
 4. Optional: look at the HUD on screen while connected to a vanilla server, and join vanilla 26.1.2 and 26.3 servers (a vanilla 26.2 join is done, see "Vanilla server join").
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
 6. Optional extras: a low-durability warning on the armor HUD (it exists only for the weapon tooltip), translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
-7. Maintainer: in the Modrinth dashboard check the three uploaded 0.2.0 versions (26.3 should be a beta), complete the project page with the updated description and submit it for review. The assistant could not check the versions because the project is still a draft.
+7. Maintainer: in the Modrinth dashboard check the three uploaded 0.2.0 versions (26.3 was uploaded as a beta; later releases use the release channel), complete the project page with the updated description and submit it for review. The assistant could not check the versions because the project is still a draft.
 8. A possible next release (new SemVer version, CHANGELOG section, tag and approval), only when the maintainer asks.
 9. Weapon tooltip, remaining manual checks (see "Known issues"): the on-screen colours of a damaged weapon, the creative search itself, the config screen section, live config changes, a vanilla server with the tooltip, and the real 0.1.0 config upgrade on 26.1.2 and 26.3.
 10. Only if asked: include/exclude item lists (ids or `#tags`, resolved once on config refresh) for modded weapons without standard tags, and optional always-on weapon HUD rows behind a toggle.

@@ -56,7 +56,7 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 
 - Targets are the files in `gradle/mc/*.properties`; select one with `-PmcVersion=<ver>` (default `26.1.2`). One jar per version, named `armor-status-neoforge-<modVersion>+mc<mc>.jar`.
 - The only version-dependent code is the hide-GUI check: overlay `neoforge/src/v26_1` (26.1.x, `Options#hideGui`) and `neoforge/src/v26_2` (26.2 and 26.3, `Hud#isHidden`). Add an overlay only when a real compile break appears.
-- Keep version-sensitive Minecraft calls behind `HudCanvas` and the overlays. 26.3 uses a NeoForge beta.
+- Keep version-sensitive Minecraft calls behind `HudCanvas` and the overlays. 26.3 builds against the stable NeoForge 26.3.0.84.
 - The weapon tooltip needs no per-version overlay: `ItemTooltipEvent`, the tags and the data components it reads are identical on the three targets.
 
 ## Weapon durability tooltip
@@ -83,7 +83,7 @@ Adding any other mutable shared state needs a stated reason in `MEMORY.md`.
 ## GitHub Actions and Modrinth
 
 - `.github/workflows/ci.yml` (running, green on `main`): matrix over the three versions; Spotless, `:common:test`, `check build`, upload jars; actions pinned by full SHA; `permissions: contents: read`.
-- `.github/workflows/release.yml` (on `main`; real runs happened for tags `v0.1.0` and `v0.2.0` on 2026-10-11, and `workflow_dispatch` dry runs succeed): tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; 26.3 as `beta` until NeoForge 26.3 has a stable build. `workflow_dispatch` is always a dry run. A real tag needs a non-empty `## [<version>]` section in `CHANGELOG.md` (`[0.1.0]` and `[0.2.0]` exist; `mod_version` in `gradle.properties` must equal the tag).
+- `.github/workflows/release.yml` (on `main`; real runs happened for tags `v0.1.0` and `v0.2.0` on 2026-10-11, and `workflow_dispatch` dry runs succeed): tag `v*.*.*`, duplicate guard, GitHub Release, Modrinth upload through Minotaur per target; every target is published as `release` (26.3 was `beta` until the stable NeoForge 26.3 build). `workflow_dispatch` is always a dry run. A real tag needs a non-empty `## [<version>]` section in `CHANGELOG.md` (`[0.1.0]` and `[0.2.0]` exist; `mod_version` in `gradle.properties` must equal the tag).
 - Secret `MODRINTH_TOKEN`, variable `MODRINTH_PROJECT_ID`. Both exist in the repository settings (the token is a secret, the project id a variable); never store their values in the repository or print them.
 
 ## Attribution and licensing
