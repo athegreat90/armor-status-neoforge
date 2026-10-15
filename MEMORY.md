@@ -6,7 +6,7 @@ Version-controlled project memory. Update at each milestone. Every result below 
 
 - Client-only NeoForge mod in Kotlin that shows worn armor durability (item icon + number) on the HUD and weapon durability in the item hover tooltip. Targets Minecraft 26.1.2, 26.2 and 26.3, Java 25, language provider KotlinLangForge (KLF).
 - Unofficial, clean-room reimplementation inspired by ShirjeelPlays' Fabric mod Armor Status. Our code is MIT. See `ATTRIBUTION.md`.
-- Mod id `armorstatusneoforge`, group `io.github.athegreat90`, version `0.2.0` (`0.1.0` was the first release), author `athegreat90`.
+- Mod id `armorstatusneoforge`, group `io.github.athegreat90`, version `0.3.0` in the repository from 2026-10-15 (not tagged or released yet; `0.2.0` is the latest release, `0.1.0` was the first), author `athegreat90`.
 - Status on 2026-10-10: tasks T1 to T10 are done and merged to `main` (PR #1, merge commit `3c2e81e`). The repository `athegreat90/armor-status-neoforge` was private at that time and CI was green on `main`. (Later the same day it was made public and `v0.1.0` was released, see the 2026-10-11 notes below and "CI/CD".)
 - Status on 2026-10-11: the maintenance and feature work recorded in `odd/tasks/gradle-junit-weapon-tooltip.md` is merged to `main` through PRs #8 to #13 (Gradle 9.8.1, JUnit 6 test hardening, shared durability helpers and weapon domain, weapon tooltip adapter and config, documentation, CI follow-ups). The maintainer approved releasing it as version 0.2.0 (SemVer minor, new feature) on 2026-10-11. The release preparation change (`mod_version=0.2.0`, CHANGELOG `[0.2.0]`, docs) was merged as PR #14 (merge commit `ac74d84`), the tag `v0.2.0` was created on `ac74d84` and `release.yml` published the GitHub Release `v0.2.0` with three jars the same day (see "2026-10-11 release of 0.2.0" in "Progress"). The Modrinth page is still a draft and is the maintainer's step. Weapon tooltip verification is largely automated by a headless probe, see "Test results" and "Known issues".
 
@@ -34,8 +34,10 @@ Version-controlled project memory. Update at each milestone. Every result below 
 | No tooltip or classification cache | Tag sets are rebound on datapack reload, the listener can run off the render thread, and a cache would save less than vanilla's own per-frame tooltip allocation. Only state: a one-shot `@Volatile failed` flag. |
 | `ItemTooltipEvent.getDisplay()` is not used | It exists only on 26.2 and 26.3. Cost: a datapack item that hides only its damage component still gets the line. |
 | Shared helpers `percentRounded()`, `isLow`, `ColorScheme` | One displayed percent drives the text and the colour, so they cannot disagree. The armor HUD keeps its boolean `gradientColors`. |
+| `includeItems`/`excludeItems` lists (ids and `#tags`) as two extra `WeaponSignals` bits (2026-10-15) | Covers modded weapons in no standard tag without a hardcoded list and keeps the decision pure: `classifyWeapon` rules are not damageable, then excluded (wins), then included, then the old rules. Parsing is lenient (`parseItemFilter` drops bad entries, so a typo never discards the good ones). The list validator only checks for strings. Tags are resolved per stack (`stack.is(TagKey)`), never cached, because they are rebound on datapack reload. |
+| Resolved filters live in `ActiveHudSettings.Snapshot` next to the `HudSettings` | `HudSettings` is in `common` and cannot hold registry keys, so `ResolvedItemFilter` (ids as `Identifier`, tags as `TagKey`) travels with it in one immutable `Snapshot` behind the single `@Volatile` reference. A reader that needs both reads `snapshot` once, so settings and filters always come from the same refresh (a review note of 2026-10-15 found two separate volatile fields could briefly disagree). No new mutable object. |
 
-Documented mutable-state exceptions: `ActiveHudSettings` (`@Volatile` holder), the render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays) and the one-shot `@Volatile failed` flag in `WeaponTooltip`.
+Documented mutable-state exceptions: `ActiveHudSettings` (`@Volatile` holder of one immutable `Snapshot`: settings plus resolved weapon filters), the render-thread caches in `ArmorStatusLayer` (`LayoutCache`, `DurabilityTextCache`, row arrays) and the one-shot `@Volatile failed` flag in `WeaponTooltip`.
 
 Open decision: `isFatal()` treats `LinkageError` as fatal, so a jar loaded on the wrong Minecraft version would crash instead of disabling the HUD. Kept as specified; the `minecraft` version range already blocks wrong-version loads. Revisit only if the user asks.
 
@@ -47,8 +49,8 @@ Summary (details in `.claude/rules/kotlin.md`, condensed in `CLAUDE.md`): immuta
 
 | | 26.1.2 | 26.2 | 26.3 |
 |---|---|---|---|
-| NeoForge (dev build) | 26.1.2.115 | 26.2.0.89 | 26.3.0.64-beta |
-| FML (seen in `runClient`) | 11.0.15 | 11.0.16 | 12.0.9 |
+| NeoForge (dev build) | 26.1.2.115 | 26.2.0.89 | 26.3.0.84 |
+| FML (seen in `runClient`) | 11.0.15 | 11.0.16 | 12.0.12 (12.0.9 on the old beta) |
 | `minecraft_version_range` | `[26.1.2]` | `[26.2]` | `[26.3]` |
 | Source overlay | `v26_1` | `v26_2` | `v26_2` |
 
@@ -113,6 +115,9 @@ Weapon tooltip specifics (read from the 26.1.2, 26.2 and 26.3 jars, then compile
   - T8 (include/exclude item lists, weapon HUD rows, detekt spike, version catalog, configuration cache) is optional and only if asked.
   - Release 0.2.0 preparation (feature document entry T9): `mod_version=0.2.0`, CHANGELOG `[0.2.0] - 2026-10-11`, README, this file and the feature document, PR #14 (merge commit `ac74d84`), released the same day, see the next entry.
 - 2026-10-11 release of 0.2.0 (maintainer-approved; the maintainer asked the assistant to execute the release task): PR #14 was merged as `ac74d84` by `athegreat90` after CI was green on the PR and on `main` at that commit. The annotated tag `v0.2.0` was created on `ac74d84` and pushed. `release.yml` ran for real on the tag (run 38139661944): Validate, the three builds (26.1.2, 26.2, 26.3), GitHub Release, the three Modrinth jobs and Summary all succeeded. This was the first real run after the `validate-wrappers` change, and it worked. The GitHub Release `v0.2.0` ("Armor Status NeoForge 0.2.0") is published (not a draft, not a pre-release) with three jars: `armor-status-neoforge-0.2.0+mc26.1.2.jar` 94046 B, `+mc26.2.jar` 94117 B, `+mc26.3.jar` 94123 B; its notes are the `[0.2.0]` changelog section. The Modrinth jobs ran in real mode (`DRY_RUN: false`, token present, `HAS_TOKEN: true`, no `Modrinth DRY RUN` output, and no token value anywhere in the run log, 0 matches). The uploaded Modrinth versions themselves were not looked at because the project is still a draft (the public API answers 404); the maintainer must check them in the Modrinth dashboard (26.3 should be a beta). Unchanged: the Modrinth page is still to be completed and submitted for review by the maintainer; nothing else is released.
+- 2026-10-15 stable 26.3 (branch `feat/26.3-stable-and-item-lists`, not pushed): `gradle/mc/26.3.properties` now has `neo_version=26.3.0.84` and `modrinth_version_type=release` (the maven lists stable 26.3.0.76 to 26.3.0.84). Observed: `.\gradlew.bat spotlessCheck check build "-PmcVersion=26.3"` BUILD SUCCESSFUL without any overlay change; `modrinth "-PmcVersion=26.3" "-PmodrinthDryRun=true"` plans `"versionType": "release"`; `runClient "-PmcVersion=26.3" "-PquickPlay=TestWorld263"` loaded the mod on NeoForge 26.3.0.84 (FML 12.0.12), the player joined, 0 `ERROR`/`Exception` lines. The HUD was not looked at on screen this time. The client JVM was stopped by PID.
+- 2026-10-15 include/exclude item lists (same branch, second commit): written test-first (RED was a compile error: `parseItemFilter`, `includeItems` and `excludeItems` did not exist). Observed: `.\gradlew.bat spotlessApply :common:test --rerun-tasks` = 571 tests in 17 suites, 0 skipped, 0 failed (533 before plus 38 new); `spotlessCheck check build "-PmcVersion=<v>"` BUILD SUCCESSFUL on 26.3, 26.2 and 26.1.2, no overlay needed; `runClient "-PmcVersion=26.3"` appended `includeItems = []` and `excludeItems = []` to an existing config, and a live edit reloaded with the bad entry dropped, 0 `ERROR`/`Exception` lines. The tooltip hover with a listed item was not looked at on screen.
+- 2026-10-15 review follow-ups (same branch): two native reviews (4 lenses each) were approved with only advisory notes. Fixed `cfa3005` (dangling KDoc link, `weaponSignals` filters made required) and a third commit that bundles settings and resolved filters into one immutable `ActiveHudSettings.Snapshot`. Observed after the bundling: `spotlessCheck check build` OK on 26.3, 26.2 and 26.1.2 with 571 tests, 0 skipped, 0 failed; `runClient "-PmcVersion=26.3"` joined a world and a live edit of `excludeItems` reloaded as `ids=[minecraft:iron_sword], tags=[c:tools/bow]`, 0 `ERROR`/`Exception` lines. At the maintainer's request the version was then raised to `0.3.0` (SemVer minor: new backwards-compatible feature, plus the 26.3 stable target) with CHANGELOG `[0.3.0] - 2026-10-15` and README; no tag, release or publish was made, and the date must be changed if the tag is cut later. Not acted on: a helper for the two duplicated list definitions, and adapter-side automated tests (no harness for NeoForge-bound code).
 
 ## Test results
 
@@ -199,12 +204,12 @@ What the probe does NOT prove: rendering on screen and GUI hover behaviour beyon
 - Weapon tooltip, verified by the headless probe on all three versions (2026-10-11, see "Test results"): the stack-to-weapon mapping over the whole registry, line text, tier colours and boundaries, position, the other weapon types, the negatives, the advanced-tooltip and null-player skips, and the settings variations. Still NOT verified: the on-screen colours of the damaged tiers and GUI hover beyond the green undamaged line seen on 26.1.2 and 26.3 (plus the 26.2 report); the creative-menu search itself; the `[weaponTooltip]` section in the config screen; config changes taking effect while the game runs (live reload from the TOML); a vanilla-server join with the tooltip; the config upgrade from a real 0.1.0 file on 26.1.2 and 26.3 (only 26.2 was checked).
 - Tooltip text is English only (`en_us.json`); other languages fall back to it.
 - A datapack item that hides only its damage component from the tooltip still gets the line, because `getDisplay()` is not read.
-- A modded weapon that is in none of the standard tags and has no spear component gets no line; there are no include or exclude lists yet.
+- A modded weapon that is in none of the standard tags and has no spear component gets no line until it is added to `includeItems` (lists added 2026-10-15). Verified so far: unit tests, compile on the three targets, and on 26.3 the config upgrade (new keys appended, `[]`) and a live edit reload that parsed `["minecraft:iron_pickaxe", "Not Valid", "#c:tools/pickaxe"]` to one id and one tag. NOT verified: the hover on screen with a listed item, the lists on 26.1.2 and 26.2 at runtime, a real modded weapon, and the config screen widgets for the lists.
 - In the creative menu every weapon is undamaged, so each reads 100% unless `showUndamaged` is off. Other tooltip mods can show the line too, and its position relative to their lines is not controlled.
 - The Minotaur `Task.project` deprecation (Gradle 10) comes from Minotaur 2.10.0, not from this repository.
 - Gradle 9.8.1 is outside KGP 2.4.21's documented range (up to 9.7.0).
 - The default layout and the F3 compact layout were checked on screen on 26.1.2, 26.2 and 26.3. The rest of the manual checklist is pending, see "Manual verification".
-- 26.3 depends on a NeoForge beta; no stable 26.3 build exists.
+- 26.3 builds against stable NeoForge 26.3.0.84 since 2026-10-15 (it was `26.3.0.64-beta`); the mods.toml minimum is now 26.3.0.84, so older beta installs must update. The 0.2.0 jar on Modrinth is still the beta-built one.
 - Config screen shows raw enum names.
 - Joining a vanilla 26.2 server works (logs only); vanilla 26.1.2 and 26.3 servers are untested, and the HUD was not checked on screen on a vanilla server. Client-only behaviour relies on `dist = CLIENT` and `side = "CLIENT"`.
 - No offhand handling and no special elytra handling, as upstream.
@@ -243,7 +248,7 @@ What the probe does NOT prove: rendering on screen and GUI hover behaviour beyon
 .\gradlew.bat buildAll
 ```
 
-- Default target when `-PmcVersion` is omitted: 26.1.2. Jars: `neoforge/build/libs/armor-status-neoforge-0.2.0+mc<mc>.jar`.
+- Default target when `-PmcVersion` is omitted: 26.1.2. Jars: `neoforge/build/libs/armor-status-neoforge-0.3.0+mc<mc>.jar`.
 - `neoforge/run/` is gitignored and holds dev saves, the test datapack and the generated config.
 - Dev client and server JVMs started for tests must be stopped by PID; Gradle daemons may stay running.
 
@@ -255,7 +260,7 @@ What the probe does NOT prove: rendering on screen and GUI hover behaviour beyon
 4. Optional: look at the HUD on screen while connected to a vanilla server, and join vanilla 26.1.2 and 26.3 servers (a vanilla 26.2 join is done, see "Vanilla server join").
 5. Decide whether `LinkageError` should stay fatal in `isFatal()` (see "Open decision").
 6. Optional extras: a low-durability warning on the armor HUD (it exists only for the weapon tooltip), translated enum labels in the config screen, an upstream issue asking the author to clarify the licence (user decides).
-7. Maintainer: in the Modrinth dashboard check the three uploaded 0.2.0 versions (26.3 should be a beta), complete the project page with the updated description and submit it for review. The assistant could not check the versions because the project is still a draft.
+7. Maintainer: in the Modrinth dashboard check the three uploaded 0.2.0 versions (26.3 was uploaded as a beta; later releases use the release channel), complete the project page with the updated description and submit it for review. The assistant could not check the versions because the project is still a draft.
 8. A possible next release (new SemVer version, CHANGELOG section, tag and approval), only when the maintainer asks.
 9. Weapon tooltip, remaining manual checks (see "Known issues"): the on-screen colours of a damaged weapon, the creative search itself, the config screen section, live config changes, a vanilla server with the tooltip, and the real 0.1.0 config upgrade on 26.1.2 and 26.3.
-10. Only if asked: include/exclude item lists (ids or `#tags`, resolved once on config refresh) for modded weapons without standard tags, and optional always-on weapon HUD rows behind a toggle.
+10. Include/exclude item lists are done (2026-10-15, see "Known issues" for what was and was not checked). Still only if asked: optional always-on weapon HUD rows behind a toggle. Manual check wanted: put a pickaxe id in `includeItems` and a sword in `excludeItems`, hover them, and open the config screen.

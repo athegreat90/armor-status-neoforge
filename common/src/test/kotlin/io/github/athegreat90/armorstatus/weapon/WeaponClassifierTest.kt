@@ -6,6 +6,8 @@ import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.BOW_TAG
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.CROSSBOW_ENCHANTABLE_TAG
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.CROSSBOW_TAG
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.DAMAGEABLE
+import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.EXCLUDED_BY_USER
+import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.INCLUDED_BY_USER
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.KINETIC_WEAPON_COMPONENT
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.MELEE_WEAPON_TAG
 import io.github.athegreat90.armorstatus.weapon.WeaponSignals.Companion.NONE
@@ -45,13 +47,17 @@ class WeaponClassifierTest {
             PIERCING_WEAPON_COMPONENT,
         )
 
+    // The two user-list flags are not weapon signals: they are decided by the item filters, so they stay out of everyFlag.
+    private val userListFlags: List<Int> = listOf(INCLUDED_BY_USER, EXCLUDED_BY_USER)
+
     // --- the flags -------------------------------------------------------------------------------------------------
 
     @Test
     fun `every flag is a single distinct bit`() {
-        everyFlag.forEach { assertEquals(1, Integer.bitCount(it), "flag ${Integer.toBinaryString(it)}") }
-        assertEquals(everyFlag.size, everyFlag.toSet().size)
-        assertEquals(everyFlag.size, Integer.bitCount(everyFlag.fold(0) { acc, flag -> acc or flag }))
+        val all = everyFlag + userListFlags
+        all.forEach { assertEquals(1, Integer.bitCount(it), "flag ${Integer.toBinaryString(it)}") }
+        assertEquals(all.size, all.toSet().size)
+        assertEquals(all.size, Integer.bitCount(all.fold(0) { acc, flag -> acc or flag }))
     }
 
     @Test
@@ -219,6 +225,47 @@ class WeaponClassifierTest {
     @Test
     fun `a modded sword-like item is recognised through the weapon enchantable tag alone`() {
         assertTrue(classifyWeapon(signals(DAMAGEABLE, WEAPON_ENCHANTABLE_TAG)))
+    }
+
+    // --- user include and exclude lists ----------------------------------------------------------------------------
+
+    @Test
+    fun `an included damageable item with no weapon signal is a weapon`() {
+        assertTrue(classifyWeapon(signals(DAMAGEABLE, INCLUDED_BY_USER)))
+        assertTrue(classifyWeapon(signals(DAMAGEABLE, INCLUDED_BY_USER), WeaponPolicy(includeAxes = false)))
+    }
+
+    @Test
+    fun `an included item that is not damageable is still not a weapon`() {
+        assertFalse(classifyWeapon(signals(INCLUDED_BY_USER)))
+        assertFalse(classifyWeapon(signals(INCLUDED_BY_USER, SWORD_TAG)))
+    }
+
+    @ParameterizedTest(name = "excluded {0} is not a weapon")
+    @MethodSource("vanillaWeapons")
+    fun `an excluded item is never a weapon`(
+        name: String,
+        bits: Int,
+    ) {
+        assertFalse(classifyWeapon(WeaponSignals(bits or EXCLUDED_BY_USER)), name)
+    }
+
+    @Test
+    fun `exclude wins over include`() {
+        assertFalse(classifyWeapon(signals(DAMAGEABLE, INCLUDED_BY_USER, EXCLUDED_BY_USER)))
+        assertFalse(classifyWeapon(signals(DAMAGEABLE, SWORD_TAG, INCLUDED_BY_USER, EXCLUDED_BY_USER)))
+    }
+
+    @Test
+    fun `an included axe is a weapon even when axes are excluded`() {
+        val axe = signals(DAMAGEABLE, AXE_TAG, MELEE_WEAPON_TAG, INCLUDED_BY_USER)
+        assertTrue(classifyWeapon(axe, WeaponPolicy(includeAxes = false)))
+    }
+
+    @Test
+    fun `the user list flags alone change nothing for non-weapons`() {
+        assertFalse(classifyWeapon(signals(DAMAGEABLE)))
+        assertFalse(classifyWeapon(NONE or INCLUDED_BY_USER or EXCLUDED_BY_USER))
     }
 
     companion object {

@@ -1,7 +1,9 @@
 package io.github.athegreat90.armorstatus.config
 
 import io.github.athegreat90.armorstatus.display.ColorScheme
+import io.github.athegreat90.armorstatus.weapon.ItemFilter
 import io.github.athegreat90.armorstatus.weapon.WeaponPolicy
+import io.github.athegreat90.armorstatus.weapon.parseItemFilter
 import kotlin.math.roundToInt
 
 /** Smallest low-durability warning threshold, in displayed percent. */
@@ -29,6 +31,9 @@ private const val DEFAULT_WARNING_THRESHOLD: Int = 15
  * @property lowDurabilityWarning when false, the red tier of [ColorScheme.TIERS] is shown as orange.
  * @property warningThresholdPercent displayed percent at or below which a weapon is considered low.
  * @property includeAxes whether axes count as weapons; see [WeaponPolicy].
+ * @property includeItems items (ids and tags) that always count as weapons, for modded weapons that carry none of the
+ *   standard weapon tags. They still need durability to get a line.
+ * @property excludeItems items (ids and tags) that never get the line; this wins over [includeItems].
  */
 data class WeaponTooltipSettings(
     val enabled: Boolean = true,
@@ -39,6 +44,8 @@ data class WeaponTooltipSettings(
     val lowDurabilityWarning: Boolean = true,
     val warningThresholdPercent: Int = DEFAULT_WARNING_THRESHOLD,
     val includeAxes: Boolean = true,
+    val includeItems: ItemFilter = ItemFilter.Empty,
+    val excludeItems: ItemFilter = ItemFilter.Empty,
 ) {
     init {
         require(warningThresholdPercent in MIN_WARNING_THRESHOLD..MAX_WARNING_THRESHOLD) {
@@ -65,6 +72,8 @@ data class WeaponTooltipSettings(
             lowDurabilityWarning: Boolean = Default.lowDurabilityWarning,
             warningThresholdPercent: Double = Default.warningThresholdPercent.toDouble(),
             includeAxes: Boolean = Default.includeAxes,
+            includeItems: List<String> = emptyList(),
+            excludeItems: List<String> = emptyList(),
         ): WeaponTooltipSettings =
             WeaponTooltipSettings(
                 enabled = enabled,
@@ -75,6 +84,8 @@ data class WeaponTooltipSettings(
                 lowDurabilityWarning = lowDurabilityWarning,
                 warningThresholdPercent = coerceThreshold(warningThresholdPercent),
                 includeAxes = includeAxes,
+                includeItems = parseItemFilter(includeItems),
+                excludeItems = parseItemFilter(excludeItems),
             )
 
         private fun coerceThreshold(value: Double): Int =

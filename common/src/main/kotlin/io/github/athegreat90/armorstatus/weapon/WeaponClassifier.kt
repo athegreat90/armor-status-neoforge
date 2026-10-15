@@ -89,8 +89,15 @@ value class WeaponSignals(
         /** The stack has the `piercing_weapon` data component (spears; catches modded spear-likes). */
         const val PIERCING_WEAPON_COMPONENT: Int = 1 shl 13
 
+        /** The item matches the user's `includeItems` list. Makes a damageable item a weapon; see [classifyWeapon]. */
+        const val INCLUDED_BY_USER: Int = 1 shl 14
+
+        /** The item matches the user's `excludeItems` list. Always wins over every other signal. */
+        const val EXCLUDED_BY_USER: Int = 1 shl 15
+
         /** Every flag that, together with [DAMAGEABLE], proves a weapon on its own: all but [DAMAGEABLE] and [AXE_TAG], which
-         * [classifyWeapon] handles separately because of [WeaponPolicy.includeAxes]. */
+         * [classifyWeapon] handles separately because of [WeaponPolicy.includeAxes]. The two user-list flags are not
+         * in this mask either: [classifyWeapon] applies them first. */
         internal const val WEAPON_SIGNALS: Int =
             MELEE_WEAPON_TAG or RANGED_WEAPON_TAG or BOW_TAG or CROSSBOW_TAG or SWORD_TAG or SPEAR_TAG or
                 WEAPON_ENCHANTABLE_TAG or BOW_ENCHANTABLE_TAG or CROSSBOW_ENCHANTABLE_TAG or
@@ -112,10 +119,13 @@ data class WeaponPolicy(
  * Whether the stack described by [signals] is a weapon whose durability the tooltip should show.
  *
  * Rules, in order:
- * 1. Not [WeaponSignals.DAMAGEABLE] (empty, undamageable or unbreakable): never a weapon.
- * 2. With [WeaponPolicy.includeAxes] false, an item tagged [WeaponSignals.AXE_TAG] is excluded, unless it is also
+ * 1. Not [WeaponSignals.DAMAGEABLE] (empty, undamageable or unbreakable): never a weapon, even when the user listed it.
+ * 2. [WeaponSignals.EXCLUDED_BY_USER]: never a weapon. It wins over [WeaponSignals.INCLUDED_BY_USER] and over every
+ *    other signal.
+ * 3. [WeaponSignals.INCLUDED_BY_USER]: a weapon, whatever the other signals and [WeaponPolicy.includeAxes] say.
+ * 4. With [WeaponPolicy.includeAxes] false, an item tagged [WeaponSignals.AXE_TAG] is excluded, unless it is also
  *    tagged [WeaponSignals.SWORD_TAG] or [WeaponSignals.SPEAR_TAG]: a modded sword-axe is still a weapon.
- * 3. Otherwise it is a weapon when any signal other than [WeaponSignals.DAMAGEABLE] is present, [WeaponSignals.AXE_TAG]
+ * 5. Otherwise it is a weapon when any signal other than [WeaponSignals.DAMAGEABLE] is present, [WeaponSignals.AXE_TAG]
  *    included: many modded axes are tagged `#minecraft:axes` and nothing else, and with axes included they count.
  *
  * No signal means no weapon, which excludes pickaxes, shovels, hoes, fishing rods, flint and steel, shields, shears
@@ -127,6 +137,8 @@ fun classifyWeapon(
     policy: WeaponPolicy = WeaponPolicy(),
 ): Boolean {
     if (!signals.has(WeaponSignals.DAMAGEABLE)) return false
+    if (signals.has(WeaponSignals.EXCLUDED_BY_USER)) return false
+    if (signals.has(WeaponSignals.INCLUDED_BY_USER)) return true
     if (signals.has(WeaponSignals.AXE_TAG) && !policy.includeAxes) {
         return signals.has(WeaponSignals.SWORD_TAG or WeaponSignals.SPEAR_TAG)
     }
