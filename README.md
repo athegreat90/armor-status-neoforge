@@ -4,7 +4,7 @@ A client-side NeoForge mod that shows the durability of your worn armor on the H
 
 > **Unofficial.** This project is not affiliated with, endorsed by, or an official release of [ShirjeelPlays](https://github.com/ShirjeelPlays/Armor-Status), the author of the Fabric mod [Armor Status](https://modrinth.com/mod/armor-status) that inspired it. It is an independent, clean-room reimplementation. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-**Status:** current version 0.2.0. It adds the weapon durability tooltip described below; version 0.1.0 had the armor HUD only. Downloads are on the GitHub Releases page. The Modrinth project exists but its page was not public yet when this was written; check the project for its current state.
+**Status:** current version 0.3.0. It builds 26.3 against the stable NeoForge and adds item include and exclude lists for the weapon tooltip; version 0.2.0 added the weapon durability tooltip described below and 0.1.0 had the armor HUD only. Downloads are on the GitHub Releases page. The Modrinth project exists but its page was not public yet when this was written; check the project for its current state.
 
 ## Features
 
@@ -161,7 +161,7 @@ Run from the repository root. On Windows use `gradlew.bat`; on Linux and macOS u
 
 > **PowerShell quoting:** always quote `-PmcVersion`. Unquoted, PowerShell splits `-PmcVersion=26.2` at the dot and Gradle receives `26`.
 
-Valid `mcVersion` values are the file names in `gradle/mc/` (`26.1.2`, `26.2`, `26.3`). Any other value fails fast with the list of available versions. Jars are written to `neoforge/build/libs/armor-status-neoforge-<version>+mc<minecraft>.jar`, for example `armor-status-neoforge-0.2.0+mc26.2.jar`.
+Valid `mcVersion` values are the file names in `gradle/mc/` (`26.1.2`, `26.2`, `26.3`). Any other value fails fast with the list of available versions. Jars are written to `neoforge/build/libs/armor-status-neoforge-<version>+mc<minecraft>.jar`, for example `armor-status-neoforge-0.3.0+mc26.2.jar`.
 
 ### Module layout
 

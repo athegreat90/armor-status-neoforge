@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-15
+
+Adds item include and exclude lists for the weapon tooltip and moves Minecraft 26.3 to the stable NeoForge. The armor HUD is unchanged.
+
 ### Added
 
 - `includeItems` and `excludeItems` in the `[weaponTooltip]` config section: lists of item ids (`examplemod:ruby_sword`) and item tags (`#examplemod:swords`) that always get, or never get, the weapon durability line. They cover modded weapons that carry none of the standard weapon tags. `excludeItems` wins over `includeItems` and over every tag, an included item still needs durability, invalid entries are ignored, and edits apply while the game runs. Existing config files keep their values.
